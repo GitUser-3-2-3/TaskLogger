@@ -6,7 +6,7 @@
 
 ## Description
 
-TaskLogger is a Go-based task tracker that helps track and manage tasks efficiently. It provides all the task relevant events
+TaskLogger is a Go-based task tracker that helps track and manage tasks efficiently. It provides all the task-relevant events
 in a simple and usable format for you to optimize your day for productivity.
 
 ## Installation
