@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -30,7 +31,10 @@ type backend struct {
 }
 
 func main() {
-	cfg := config{}
+	var cfg config
+	if err := godotenv.Load(".envrc"); err != nil {
+		log.Error().Err(err).Msg("Error loading .envrc file")
+	}
 	runFlags(&cfg)
 
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
@@ -60,7 +64,7 @@ func main() {
 func runFlags(cfg *config) {
 	flag.StringVar(&cfg.env, "env", "dev", "Environment (dev | prod)")
 	flag.IntVar(&cfg.port, "port", 4000, "API server port")
-	flag.StringVar(&cfg.db.dsn, "db-dsn", "root:Qwerty1,0*@/task_logger?parseTime=true", "MySQL DSN")
+	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("TASK_LOGGER_DSN"), "MySQL DSN")
 
 	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "Max Open DB Connections")
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "Max Idle DB Connections")
