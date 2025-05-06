@@ -14,6 +14,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+const version = "1.0.0"
+
 type config struct {
 	env  string
 	port int
