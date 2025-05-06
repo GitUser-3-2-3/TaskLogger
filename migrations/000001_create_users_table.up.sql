@@ -1,10 +1,10 @@
-CREATE TABLE users
+CREATE TABLE IF NOT EXISTS users
 (
-    user_id       integer primary key,
-    username      varchar(50)  not null unique,
-    email         varchar(100) not null unique,
-    firstname     varchar(50)  not null,
-    lastname      varchar(50)  not null,
-    password_hash varchar(255) not null,
-    created_at    datetime     not null default current_timestamp
+    user_id       INTEGER AUTO_INCREMENT PRIMARY KEY,
+    username      VARCHAR(50)  NOT NULL UNIQUE,
+    email         VARCHAR(100) NOT NULL UNIQUE,
+    firstname     VARCHAR(50)  NOT NULL,
+    lastname      VARCHAR(50)  NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
