@@ -5,6 +5,6 @@ Content-Type: application/json
 {
     "name": "work",
     "color": "#4287f5",
-    "user_id": 1
+    "user_id": 2
 }
 

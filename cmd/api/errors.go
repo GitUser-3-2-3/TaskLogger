@@ -14,6 +14,10 @@ func (bknd *backend) errResponseJSON(w http.ResponseWriter, r *http.Request, sta
 	}
 }
 
+func (bknd *backend) errFailedValidation(w http.ResponseWriter, r *http.Request, errs map[string]string) {
+	bknd.errResponseJSON(w, r, http.StatusBadRequest, errs)
+}
+
 func (bknd *backend) logError(r *http.Request, err error) {
 	var (
 		method = r.Method
