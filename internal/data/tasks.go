@@ -1,6 +1,9 @@
 package data
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type StatusType string
 
@@ -24,4 +27,24 @@ type Tasks struct {
 	Deadline      *time.Time `json:"deadline,omitempty"`
 	UserID        int64      `json:"-"`
 	CategoryID    *int64     `json:"-"`
+}
+
+type TaskModel struct {
+	DB *sql.DB
+}
+
+func (ctg *TaskModel) Insert(task *Tasks) error {
+	return nil
+}
+
+func (ctg *TaskModel) Get(id int64) (*Tasks, error) {
+	return nil, nil
+}
+
+func (ctg *TaskModel) Update(task *Tasks) error {
+	return nil
+}
+
+func (ctg *TaskModel) Delete(id int64) error {
+	return nil
 }

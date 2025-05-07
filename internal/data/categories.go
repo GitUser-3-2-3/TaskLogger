@@ -12,8 +12,24 @@ type Categories struct {
 	UserID int64  `json:"-"`
 }
 
-type CategoriesModel struct {
+type CategoryModel struct {
 	DB *sql.DB
+}
+
+func (ctg *CategoryModel) Insert(category *Categories) error {
+	return nil
+}
+
+func (ctg *CategoryModel) Get(id int64) (*Categories, error) {
+	return nil, nil
+}
+
+func (ctg *CategoryModel) Update(category *Categories) error {
+	return nil
+}
+
+func (ctg *CategoryModel) Delete(id int64) error {
+	return nil
 }
 
 func ValidateCategory(vld *validator.Validator, category *Categories) {
