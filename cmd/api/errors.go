@@ -27,6 +27,11 @@ func (bknd *backend) errMethodNotAllowed(w http.ResponseWriter, r *http.Request)
 	bknd.errResponseJSON(w, r, http.StatusMethodNotAllowed, errMsg)
 }
 
+func (bknd *backend) errBadRequest(w http.ResponseWriter, r *http.Request, err error) {
+	errMsg := "invalid request"
+	bknd.errResponseJSON(w, r, http.StatusBadRequest, errMsg+", "+err.Error())
+}
+
 func (bknd *backend) errResourceNotFound(w http.ResponseWriter, r *http.Request) {
 	errMsg := "requested resource not found ·_·"
 	bknd.errResponseJSON(w, r, http.StatusMethodNotAllowed, errMsg)

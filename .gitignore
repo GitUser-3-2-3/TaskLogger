@@ -5,6 +5,9 @@
 # Custom
 .envrc
 
+# .http files
+*.http
+
 # User-specific stuff
 .idea/**/workspace.xml
 .idea/**/tasks.xml

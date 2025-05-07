@@ -12,6 +12,7 @@ func (bknd *backend) showTaskHandler(w http.ResponseWriter, r *http.Request) {
 		bknd.errResourceNotFound(w, r)
 		return
 	}
+	deadline := time.Now().Add(24 * time.Hour)
 	task := data.Tasks{
 		ID:            id,
 		Name:          "Project",
@@ -22,9 +23,9 @@ func (bknd *backend) showTaskHandler(w http.ResponseWriter, r *http.Request) {
 		TotalDuration: 0,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
-		Deadline:      time.Now().Add(24 * time.Hour),
+		Deadline:      &deadline,
 		UserID:        1,
-		CategoryID:    1,
+		CategoryID:    nil,
 	}
 	err = bknd.writeJSON(w, http.StatusOK, wrapper{"task": task}, nil)
 	if err != nil {

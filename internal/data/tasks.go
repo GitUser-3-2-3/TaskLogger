@@ -16,12 +16,12 @@ type Tasks struct {
 	Name          string     `json:"name"`
 	Description   string     `json:"description,omitempty"`
 	Status        StatusType `json:"status"`
-	Priority      byte       `json:"priority"`
+	Priority      int        `json:"priority"`
 	Image         string     `json:"image,omitempty"`
 	TotalDuration int        `json:"total-duration"`
 	CreatedAt     time.Time  `json:"created-at"`
 	UpdatedAt     time.Time  `json:"updated-at"`
-	Deadline      time.Time  `json:"deadline"`
+	Deadline      *time.Time `json:"deadline,omitempty"`
 	UserID        int64      `json:"-"`
-	CategoryID    int64      `json:"-"`
+	CategoryID    *int64     `json:"-"`
 }

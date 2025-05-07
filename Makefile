@@ -7,7 +7,7 @@ include .envrc
 
 ## run/api: run the cmd/api application
 .PHONY: run/api
-run/api:
+run:
 	@go run ./cmd/api -db-dsn=${TASK_LOGGER_DSN}
 
 ## db/mysql: connect to the database using
