@@ -9,8 +9,10 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func (bknd *backend) writeJSON(w http.ResponseWriter, status int, data any, headers http.Header) error {
-	response, err := json.Marshal(data)
+type wrapper map[string]any
+
+func (bknd *backend) writeJSON(w http.ResponseWriter, status int, data wrapper, headers http.Header) error {
+	response, err := json.MarshalIndent(data, "", "\t")
 	if err != nil {
 		return err
 	}
@@ -20,9 +22,11 @@ func (bknd *backend) writeJSON(w http.ResponseWriter, status int, data any, head
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+
 	_, err = w.Write(response)
 	if err != nil {
-		bknd.logger.Err(err).Msg("Failed to write response")
+		bknd.logger.Err(err).Msg("Error while writing response")
+		return err
 	}
 	return nil
 }

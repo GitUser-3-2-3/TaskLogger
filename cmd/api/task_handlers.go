@@ -9,8 +9,7 @@ import (
 func (bknd *backend) showTaskHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := bknd.readIdParam(r)
 	if err != nil {
-		http.NotFound(w, r)
-		bknd.logger.Err(err).Msg("Error while reading id")
+		bknd.errResourceNotFound(w, r)
 		return
 	}
 	task := data.Tasks{
@@ -27,9 +26,8 @@ func (bknd *backend) showTaskHandler(w http.ResponseWriter, r *http.Request) {
 		UserID:        1,
 		CategoryID:    1,
 	}
-	err = bknd.writeJSON(w, http.StatusOK, task, nil)
+	err = bknd.writeJSON(w, http.StatusOK, wrapper{"task": task}, nil)
 	if err != nil {
-		bknd.logger.Err(err).Msg("Error while writing to JSON")
-		http.Error(w, "Couldn't process your request", http.StatusInternalServerError)
+		bknd.errInternalServerError(w, r, err)
 	}
 }

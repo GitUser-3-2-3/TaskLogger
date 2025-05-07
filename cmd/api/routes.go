@@ -9,8 +9,11 @@ import (
 func (bknd *backend) routes() http.Handler {
 	router := httprouter.New()
 
+	router.MethodNotAllowed = http.HandlerFunc(bknd.errMethodNotAllowed)
+	router.NotFound = http.HandlerFunc(bknd.errResourceNotFound)
+
 	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", bknd.healthcheckHandler)
 	router.HandlerFunc(http.MethodGet, "/v1/tasks/:id", bknd.showTaskHandler)
 
-	return router
+	return bknd.recoverPanic(router)
 }

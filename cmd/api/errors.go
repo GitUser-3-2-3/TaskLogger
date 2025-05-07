@@ -1,0 +1,39 @@
+package main
+
+import (
+	"fmt"
+	"net/http"
+)
+
+func (bknd *backend) errResponseJSON(w http.ResponseWriter, r *http.Request, status int, errMsg any) {
+	wrp := wrapper{"error": errMsg}
+	err := bknd.writeJSON(w, status, wrp, nil)
+	if err != nil {
+		bknd.logError(r, err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func (bknd *backend) logError(r *http.Request, err error) {
+	var (
+		method = r.Method
+		uri    = r.URL.RequestURI()
+	)
+	bknd.logger.Err(err).Msgf("method: %s, uri: %s", method, uri)
+}
+
+func (bknd *backend) errMethodNotAllowed(w http.ResponseWriter, r *http.Request) {
+	errMsg := fmt.Sprintf("%s method not supported for this request", r.Method)
+	bknd.errResponseJSON(w, r, http.StatusMethodNotAllowed, errMsg)
+}
+
+func (bknd *backend) errResourceNotFound(w http.ResponseWriter, r *http.Request) {
+	errMsg := "requested resource not found ·_·"
+	bknd.errResponseJSON(w, r, http.StatusMethodNotAllowed, errMsg)
+}
+
+func (bknd *backend) errInternalServerError(w http.ResponseWriter, r *http.Request, err error) {
+	bknd.logError(r, err)
+	errMsg := "server encountered a problem and could not process your request :("
+	bknd.errResponseJSON(w, r, http.StatusInternalServerError, errMsg)
+}
