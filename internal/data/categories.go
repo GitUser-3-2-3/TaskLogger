@@ -4,7 +4,14 @@ import (
 	"TaskLogger/internal/validator"
 	"context"
 	"database/sql"
+	"errors"
 	"time"
+
+	"github.com/go-sql-driver/mysql"
+)
+
+var (
+	ErrDuplicateEntry = errors.New("category already exists")
 )
 
 type Categories struct {
@@ -28,8 +35,14 @@ func (dbm *CategoryModel) Insert(ctg *Categories) (int64, error) {
 	args := []any{ctg.ID, ctg.Name, ctg.Color, ctg.UserID}
 	result, err := dbm.DB.ExecContext(ctx, query, args...)
 
+	var mysqlErr *mysql.MySQLError
 	if err != nil {
-		return 0, err
+		switch {
+		case errors.As(err, &mysqlErr) && mysqlErr.Number == 1062:
+			return 0, ErrDuplicateEntry
+		default:
+			return 0, err
+		}
 	}
 	id, err := result.LastInsertId()
 	if err != nil {
@@ -38,8 +51,29 @@ func (dbm *CategoryModel) Insert(ctg *Categories) (int64, error) {
 	return id, nil
 }
 
-func (dbm *CategoryModel) Get(id int64) (*Categories, error) {
-	return nil, nil
+func (dbm *CategoryModel) GetById(id int64) (*Categories, error) {
+	if id < 1 {
+		return nil, ErrRecordNotFound
+	}
+	query := `SELECT id, name, color FROM categories WHERE id = ?`
+	var ctg Categories
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := dbm.DB.QueryRowContext(ctx, query, id).Scan(&ctg.ID,
+		&ctg.Name,
+		&ctg.Color,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+	return &ctg, nil
 }
 
 func (dbm *CategoryModel) Update(category *Categories) error {

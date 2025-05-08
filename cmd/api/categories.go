@@ -3,6 +3,7 @@ package main
 import (
 	"TaskLogger/internal/data"
 	"TaskLogger/internal/validator"
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -31,13 +32,18 @@ func (bknd *backend) createCategoriesHandler(w http.ResponseWriter, r *http.Requ
 	}
 	id, err := bknd.models.Category.Insert(category)
 	if err != nil {
-		bknd.errInternalServerError(w, r, err)
+		switch {
+		case errors.Is(err, data.ErrDuplicateEntry):
+			bknd.errDuplicateEntryFound(w, r, err)
+		default:
+			bknd.errInternalServerError(w, r, err)
+		}
 		return
 	}
 	headers := make(http.Header)
 	headers.Set("Location", fmt.Sprintf("/v1/category/%d", id))
 
-	err = bknd.writeJSON(w, http.StatusCreated, wrapper{"category": category}, headers)
+	err = bknd.writeJSON(w, http.StatusCreated, wrapper{"id": id}, headers)
 	if err != nil {
 		bknd.errInternalServerError(w, r, err)
 	}
@@ -49,13 +55,17 @@ func (bknd *backend) showCategoriesHandler(w http.ResponseWriter, r *http.Reques
 		bknd.errResourceNotFound(w, r)
 		return
 	}
-	category := data.Categories{
-		ID:     id,
-		Name:   "Work",
-		Color:  "#7DA925",
-		UserID: 1,
+	ctg, err := bknd.models.Category.GetById(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			bknd.errResourceNotFound(w, r)
+		default:
+			bknd.errInternalServerError(w, r, err)
+		}
+		return
 	}
-	err = bknd.writeJSON(w, http.StatusOK, wrapper{"category": category}, nil)
+	err = bknd.writeJSON(w, http.StatusOK, wrapper{"category": ctg}, nil)
 	if err != nil {
 		bknd.errInternalServerError(w, r, err)
 	}

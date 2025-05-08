@@ -41,6 +41,11 @@ func (bknd *backend) errResourceNotFound(w http.ResponseWriter, r *http.Request)
 	bknd.errResponseJSON(w, r, http.StatusMethodNotAllowed, errMsg)
 }
 
+func (bknd *backend) errDuplicateEntryFound(w http.ResponseWriter, r *http.Request, err error) {
+	errMsg := "duplicate entry not allowed"
+	bknd.errResponseJSON(w, r, http.StatusMethodNotAllowed, errMsg+", "+err.Error())
+}
+
 func (bknd *backend) errInternalServerError(w http.ResponseWriter, r *http.Request, err error) {
 	bknd.logError(r, err)
 	errMsg := "server encountered a problem and could not process your request :("

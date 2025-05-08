@@ -3,8 +3,11 @@ POST http://localhost:4000/v1/categories
 Content-Type: application/json
 
 {
-    "name": "work",
+    "name": "study",
     "color": "#4287f5",
     "user_id": 1
 }
+
+### Get category by id
+GET http://localhost:4000/v1/categories/6
 
