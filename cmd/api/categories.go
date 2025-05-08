@@ -3,6 +3,7 @@ package main
 import (
 	"TaskLogger/internal/data"
 	"TaskLogger/internal/validator"
+	"fmt"
 	"net/http"
 )
 
@@ -18,6 +19,7 @@ func (bknd *backend) createCategoriesHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	vld := validator.NewValidator()
+
 	category := &data.Categories{
 		Name:   input.Name,
 		Color:  input.Color,
@@ -27,7 +29,18 @@ func (bknd *backend) createCategoriesHandler(w http.ResponseWriter, r *http.Requ
 		bknd.errFailedValidation(w, r, vld.Errors)
 		return
 	}
-	_ = bknd.writeJSON(w, http.StatusCreated, wrapper{"input": input, "category": category}, nil)
+	id, err := bknd.models.Category.Insert(category)
+	if err != nil {
+		bknd.errInternalServerError(w, r, err)
+		return
+	}
+	headers := make(http.Header)
+	headers.Set("Location", fmt.Sprintf("/v1/category/%d", id))
+
+	err = bknd.writeJSON(w, http.StatusCreated, wrapper{"category": category}, headers)
+	if err != nil {
+		bknd.errInternalServerError(w, r, err)
+	}
 }
 
 func (bknd *backend) showCategoriesHandler(w http.ResponseWriter, r *http.Request) {

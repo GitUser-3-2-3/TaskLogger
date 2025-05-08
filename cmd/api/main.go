@@ -1,6 +1,7 @@
 package main
 
 import (
+	"TaskLogger/internal/data"
 	"context"
 	"database/sql"
 	"flag"
@@ -30,6 +31,7 @@ type config struct {
 type backend struct {
 	logger zerolog.Logger
 	config config
+	models data.Models
 }
 
 func main() {
@@ -56,6 +58,7 @@ func main() {
 	bknd := &backend{
 		config: cfg,
 		logger: logger,
+		models: data.NewModels(db),
 	}
 	err = bknd.serve()
 	if err != nil {

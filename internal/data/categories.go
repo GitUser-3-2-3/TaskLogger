@@ -2,7 +2,9 @@ package data
 
 import (
 	"TaskLogger/internal/validator"
+	"context"
 	"database/sql"
+	"time"
 )
 
 type Categories struct {
@@ -16,19 +18,35 @@ type CategoryModel struct {
 	DB *sql.DB
 }
 
-func (ctg *CategoryModel) Insert(category *Categories) error {
-	return nil
+func (dbm *CategoryModel) Insert(ctg *Categories) (int64, error) {
+	query := `INSERT INTO categories (id, name, color, user_id)
+                VALUES (?, ?, ?, ?)`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	args := []any{ctg.ID, ctg.Name, ctg.Color, ctg.UserID}
+	result, err := dbm.DB.ExecContext(ctx, query, args...)
+
+	if err != nil {
+		return 0, err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
 }
 
-func (ctg *CategoryModel) Get(id int64) (*Categories, error) {
+func (dbm *CategoryModel) Get(id int64) (*Categories, error) {
 	return nil, nil
 }
 
-func (ctg *CategoryModel) Update(category *Categories) error {
+func (dbm *CategoryModel) Update(category *Categories) error {
 	return nil
 }
 
-func (ctg *CategoryModel) Delete(id int64) error {
+func (dbm *CategoryModel) Delete(id int64) error {
 	return nil
 }
 
