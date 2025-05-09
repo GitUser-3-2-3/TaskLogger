@@ -7,7 +7,7 @@ import (
 )
 
 func (bknd *backend) showTaskHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := bknd.readIdParam(r)
+	id, err := bknd.readIdParam(r, "id")
 	if err != nil {
 		bknd.errResourceNotFound(w, r)
 		return

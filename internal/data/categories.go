@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -97,5 +98,58 @@ func (dbm *CategoryModel) Update(category *Categories) error {
 }
 
 func (dbm *CategoryModel) Delete(id int64) error {
+	if id < 1 {
+		return ErrRecordNotFound
+	}
+	query := `DELETE FROM categories WHERE id = ?`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	result, err := dbm.DB.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return ErrRecordNotFound
+	}
 	return nil
+}
+
+func (dbm *CategoryModel) GetAllByUserId(userId int64) ([]*Categories, error) {
+	if userId < 1 {
+		return nil, ErrRecordNotFound
+	}
+	query := `SELECT id, name, color FROM categories WHERE user_id = ?`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := dbm.DB.QueryContext(ctx, query, userId)
+	if err != nil {
+		return nil, err
+	}
+	defer func(rows *sql.Rows) {
+		if err := rows.Close(); err != nil {
+			log.Error().Err(err).Msg("failed to close rows")
+		}
+	}(rows)
+	var ctgList []*Categories
+
+	for rows.Next() {
+		var ctg Categories
+		err = rows.Scan(&ctg.ID, &ctg.Name, &ctg.Color)
+		if err != nil {
+			return nil, err
+		}
+		ctgList = append(ctgList, &ctg)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return ctgList, nil
 }

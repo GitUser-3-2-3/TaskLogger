@@ -34,9 +34,9 @@ func (bknd *backend) writeJSON(w http.ResponseWriter, status int, data wrapper, 
 	return nil
 }
 
-func (bknd *backend) readIdParam(r *http.Request) (int64, error) {
+func (bknd *backend) readIdParam(r *http.Request, param string) (int64, error) {
 	params := httprouter.ParamsFromContext(r.Context())
-	id, err := strconv.ParseInt(params.ByName("id"), 10, 64)
+	id, err := strconv.ParseInt(params.ByName(param), 10, 64)
 	if err != nil || id < 1 {
 		return 0, errors.New("invalid id")
 	}

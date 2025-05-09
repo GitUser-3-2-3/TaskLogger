@@ -19,5 +19,7 @@ func (bknd *backend) routes() http.Handler {
 	router.HandlerFunc(http.MethodGet, "/v1/categories/:id", bknd.showCategoriesHandler)
 	router.HandlerFunc(http.MethodPatch, "/v1/categories/:id", bknd.updateCategoryHandler)
 
+	router.HandlerFunc(http.MethodGet, "/v1/users/:userId/categories", bknd.showCategoriesByUserIdHandler)
+
 	return bknd.recoverPanic(router)
 }

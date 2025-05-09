@@ -50,7 +50,7 @@ func (bknd *backend) createCategoriesHandler(w http.ResponseWriter, r *http.Requ
 }
 
 func (bknd *backend) showCategoriesHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := bknd.readIdParam(r)
+	id, err := bknd.readIdParam(r, "id")
 	if err != nil {
 		bknd.errResourceNotFound(w, r)
 		return
@@ -71,8 +71,25 @@ func (bknd *backend) showCategoriesHandler(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+func (bknd *backend) showCategoriesByUserIdHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := bknd.readIdParam(r, "userId")
+	if err != nil {
+		bknd.errResourceNotFound(w, r)
+		return
+	}
+	ctgList, err := bknd.models.Category.GetAllByUserId(id)
+	if err != nil {
+		bknd.errInternalServerError(w, r, err)
+		return
+	}
+	err = bknd.writeJSON(w, http.StatusOK, wrapper{"categories": ctgList}, nil)
+	if err != nil {
+		bknd.errInternalServerError(w, r, err)
+	}
+}
+
 func (bknd *backend) updateCategoryHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := bknd.readIdParam(r)
+	id, err := bknd.readIdParam(r, "id")
 	if err != nil {
 		bknd.errResourceNotFound(w, r)
 		return
@@ -115,6 +132,28 @@ func (bknd *backend) updateCategoryHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	err = bknd.writeJSON(w, http.StatusOK, wrapper{"category": category}, nil)
+	if err != nil {
+		bknd.errInternalServerError(w, r, err)
+	}
+}
+
+func (bknd *backend) deleteCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := bknd.readIdParam(r, "id")
+	if err != nil {
+		bknd.errResourceNotFound(w, r)
+		return
+	}
+	err = bknd.models.Category.Delete(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			bknd.errResourceNotFound(w, r)
+		default:
+			bknd.errInternalServerError(w, r, err)
+		}
+		return
+	}
+	err = bknd.writeJSON(w, http.StatusOK, wrapper{"message": "deletion successful"}, nil)
 	if err != nil {
 		bknd.errInternalServerError(w, r, err)
 	}

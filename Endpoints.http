@@ -3,13 +3,13 @@ POST http://localhost:4000/v1/categories
 Content-Type: application/json
 
 {
-    "name": "study",
-    "color": "#4287f5",
+    "name": "coding",
+    "color": "#4437f5",
     "user_id": 1
 }
 
 ### Get category by id
-GET http://localhost:4000/v1/categories/6
+GET http://localhost:4000/v1/categories/17
 
 ### Patch category by id
 PATCH http://localhost:4000/v1/categories/6
@@ -19,3 +19,5 @@ Content-Type: application/json
     "name": "work"
 }
 
+### Get categories by userId
+GET http://localhost:4000/v1/users/1/categories

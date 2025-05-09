@@ -8,4 +8,4 @@ VALUES ('juhi', 'juhi@gmail.com', 'Juhi', 'Srivastava', 'labalabadubdub');
 
 SELECT * FROM users;
 SELECT * FROM tasks;
-SELECT * FROM categories;
+SELECT id, name, color FROM categories WHERE user_id = 1;
