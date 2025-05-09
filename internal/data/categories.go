@@ -1,7 +1,6 @@
 package data
 
 import (
-	"TaskLogger/internal/validator"
 	"context"
 	"database/sql"
 	"errors"
@@ -55,7 +54,7 @@ func (dbm *CategoryModel) GetById(id int64) (*Categories, error) {
 	if id < 1 {
 		return nil, ErrRecordNotFound
 	}
-	query := `SELECT id, name, color FROM categories WHERE id = ?`
+	query := `SELECT id, name, color, user_id FROM categories WHERE id = ?`
 	var ctg Categories
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -64,6 +63,7 @@ func (dbm *CategoryModel) GetById(id int64) (*Categories, error) {
 	err := dbm.DB.QueryRowContext(ctx, query, id).Scan(&ctg.ID,
 		&ctg.Name,
 		&ctg.Color,
+		&ctg.UserID,
 	)
 	if err != nil {
 		switch {
@@ -77,17 +77,25 @@ func (dbm *CategoryModel) GetById(id int64) (*Categories, error) {
 }
 
 func (dbm *CategoryModel) Update(category *Categories) error {
+	query := `UPDATE categories SET name = ?, color = ? WHERE id = ?`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	args := []any{category.Name, category.Color, category.ID}
+	_, err := dbm.DB.ExecContext(ctx, query, args...)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return ErrRecordNotFound
+		default:
+			return err
+		}
+	}
 	return nil
 }
 
 func (dbm *CategoryModel) Delete(id int64) error {
 	return nil
-}
-
-func ValidateCategory(vld *validator.Validator, category *Categories) {
-	vld.CheckError(category.Name != "", "name", "must not be empty")
-	vld.CheckError(len(category.Name) > 0 &&
-		len(category.Name) <= 50, "name", "cannot be longer than 50 chars")
-
-	vld.CheckError(category.UserID > 0, "user_id", "cannot be zero or negative")
 }

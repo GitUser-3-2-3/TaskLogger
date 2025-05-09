@@ -70,3 +70,52 @@ func (bknd *backend) showCategoriesHandler(w http.ResponseWriter, r *http.Reques
 		bknd.errInternalServerError(w, r, err)
 	}
 }
+
+func (bknd *backend) updateCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := bknd.readIdParam(r)
+	if err != nil {
+		bknd.errResourceNotFound(w, r)
+		return
+	}
+	category, err := bknd.models.Category.GetById(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			bknd.errResourceNotFound(w, r)
+		default:
+			bknd.errInternalServerError(w, r, err)
+		}
+		return
+	}
+	var input struct {
+		Name   *string `json:"name"`
+		Color  *string `json:"color"`
+		UserID *int64  `json:"-"`
+	}
+	err = bknd.readJSON(w, r, &input)
+	if err != nil {
+		bknd.errBadRequest(w, r, err)
+		return
+	}
+	category.ApplyPartialUpdatesToCtg(input.Name, input.Color, input.UserID)
+
+	vld := validator.NewValidator()
+	if data.ValidateCategory(vld, category); !vld.Valid() {
+		bknd.errFailedValidation(w, r, vld.Errors)
+		return
+	}
+	err = bknd.models.Category.Update(category)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			bknd.errResourceNotFound(w, r)
+		default:
+			bknd.errInternalServerError(w, r, err)
+		}
+		return
+	}
+	err = bknd.writeJSON(w, http.StatusOK, wrapper{"category": category}, nil)
+	if err != nil {
+		bknd.errInternalServerError(w, r, err)
+	}
+}

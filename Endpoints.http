@@ -11,3 +11,11 @@ Content-Type: application/json
 ### Get category by id
 GET http://localhost:4000/v1/categories/6
 
+### Patch category by id
+PATCH http://localhost:4000/v1/categories/6
+Content-Type: application/json
+
+{
+    "name": "work"
+}
+
