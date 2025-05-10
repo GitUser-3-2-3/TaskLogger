@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"database/sql"
 	"time"
 )
@@ -26,25 +27,43 @@ type Tasks struct {
 	UpdatedAt     time.Time  `json:"updated-at"`
 	Deadline      *time.Time `json:"deadline,omitempty"`
 	UserID        int64      `json:"-"`
-	CategoryID    *int64     `json:"-"`
+	CategoryID    *int64     `json:"category_id,omitempty"`
 }
 
 type TaskModel struct {
 	DB *sql.DB
 }
 
-func (ctg *TaskModel) Insert(task *Tasks) error {
-	return nil
+func (dbm *TaskModel) Insert(task *Tasks) (int64, error) {
+	query := `INSERT INTO tasks (name, description, status, priority, image, deadline, user_id, category_id) 
+		    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	args := []any{
+		task.Name, task.Description, task.Status, task.Priority, task.Image,
+		task.Deadline, task.UserID, task.CategoryID,
+	}
+	rows, err := dbm.DB.ExecContext(ctx, query, args...)
+	if err != nil {
+		return 0, err
+	}
+	id, err := rows.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
 }
 
-func (ctg *TaskModel) Get(id int64) (*Tasks, error) {
+func (dbm *TaskModel) Get(id int64) (*Tasks, error) {
 	return nil, nil
 }
 
-func (ctg *TaskModel) Update(task *Tasks) error {
+func (dbm *TaskModel) Update(task *Tasks) error {
 	return nil
 }
 
-func (ctg *TaskModel) Delete(id int64) error {
+func (dbm *TaskModel) Delete(id int64) error {
 	return nil
 }

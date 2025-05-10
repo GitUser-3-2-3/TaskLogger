@@ -21,5 +21,7 @@ func (bknd *backend) routes() http.Handler {
 
 	router.HandlerFunc(http.MethodGet, "/v1/users/:userId/categories", bknd.showCategoriesByUserIdHandler)
 
+	router.HandlerFunc(http.MethodPost, "/v1/tasks", bknd.createTaskHandler)
+
 	return bknd.recoverPanic(bknd.rateLimiter(router))
 }

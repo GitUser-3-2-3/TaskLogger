@@ -21,3 +21,12 @@ func (ctg *Categories) ApplyPartialUpdatesToCtg(name, color *string, userID *int
 		ctg.UserID = *userID
 	}
 }
+
+// ValidateTask todo -> incomplete validation method
+func ValidateTask(vld *validator.Validator, task *Tasks) {
+	vld.CheckError(task.Name != "", "name", "must not be empty")
+	vld.CheckError(len(task.Name) > 0 &&
+		len(task.Name) <= 50, "name", "cannot be longer than 50 chars")
+
+	vld.CheckError(task.UserID > 0, "user_id", "cannot be zero or negative")
+}
