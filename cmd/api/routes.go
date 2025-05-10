@@ -21,5 +21,5 @@ func (bknd *backend) routes() http.Handler {
 
 	router.HandlerFunc(http.MethodGet, "/v1/users/:userId/categories", bknd.showCategoriesByUserIdHandler)
 
-	return bknd.recoverPanic(router)
+	return bknd.recoverPanic(bknd.rateLimiter(router))
 }

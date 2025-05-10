@@ -26,6 +26,11 @@ type config struct {
 		maxIdleTime  time.Duration
 		maxIdleConns int
 	}
+	limiter struct {
+		rps     float64
+		burst   int
+		enabled bool
+	}
 }
 
 type backend struct {
@@ -74,6 +79,10 @@ func runFlags(cfg *config) {
 	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "Max Open DB Connections")
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "Max Idle DB Connections")
 	flag.DurationVar(&cfg.db.maxIdleTime, "db-max-idle-time", 15*time.Minute, "Max Idle DB Time")
+
+	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 2, "Limiter max requests per second")
+	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 5, "Limiter max burst requests")
+	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiting")
 
 	flag.Parse()
 }

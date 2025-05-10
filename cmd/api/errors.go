@@ -14,6 +14,11 @@ func (bknd *backend) errResponseJSON(w http.ResponseWriter, r *http.Request, sta
 	}
 }
 
+func (bknd *backend) errRateLimitExceeded(w http.ResponseWriter, r *http.Request) {
+	errMsg := "rate limit exceeded, try again after a few seconds"
+	bknd.errResponseJSON(w, r, http.StatusTooManyRequests, errMsg)
+}
+
 func (bknd *backend) errFailedValidation(w http.ResponseWriter, r *http.Request, errs map[string]string) {
 	bknd.errResponseJSON(w, r, http.StatusBadRequest, errs)
 }
