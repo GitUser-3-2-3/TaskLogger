@@ -22,17 +22,26 @@ Content-Type: application/json
 ### Get categories by userId
 GET http://localhost:4000/v1/users/1/categories
 
+### Delete category by id
+DELETE http://localhost:4000/v1/categories/17
+
 ### Create a new task
 POST http://localhost:4000/v1/tasks
 Content-Type: application/json
 
 {
-    "name": "Complete Go project",
+    "name": "Complete college work",
     "description": "Finish the TaskLogger API implementation",
     "status": "In Progress",
     "priority": 2,
     "image": "",
-    "deadline": "2023-12-31T23:59:59Z",
+    "deadline": "2027-12-31T23:59:59Z",
     "user_id": 1,
-    "category_id": 14
+    "category_id": 18
 }
+
+### Get task by id
+GET http://localhost:4000/v1/tasks/8
+
+### Delete task by id
+DELETE http://localhost:4000/v1/tasks/8

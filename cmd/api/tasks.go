@@ -3,6 +3,7 @@ package main
 import (
 	"TaskLogger/internal/data"
 	"TaskLogger/internal/validator"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -60,22 +61,39 @@ func (bknd *backend) showTaskHandler(w http.ResponseWriter, r *http.Request) {
 		bknd.errResourceNotFound(w, r)
 		return
 	}
-	deadline := time.Now().Add(24 * time.Hour)
-	task := data.Tasks{
-		ID:            id,
-		Name:          "Project",
-		Description:   "",
-		Status:        "",
-		Priority:      1,
-		Image:         "",
-		TotalDuration: 0,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
-		Deadline:      &deadline,
-		UserID:        1,
-		CategoryID:    nil,
+	task, err := bknd.models.Tasks.GetById(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			bknd.errResourceNotFound(w, r)
+		default:
+			bknd.errInternalServerError(w, r, err)
+		}
+		return
 	}
 	err = bknd.writeJSON(w, http.StatusOK, wrapper{"task": task}, nil)
+	if err != nil {
+		bknd.errInternalServerError(w, r, err)
+	}
+}
+
+func (bknd *backend) deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := bknd.readIdParam(r, "id")
+	if err != nil {
+		bknd.errResourceNotFound(w, r)
+		return
+	}
+	err = bknd.models.Tasks.Delete(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			bknd.errResourceNotFound(w, r)
+		default:
+			bknd.errInternalServerError(w, r, err)
+		}
+		return
+	}
+	err = bknd.writeJSON(w, http.StatusOK, wrapper{"message": "task deleted"}, nil)
 	if err != nil {
 		bknd.errInternalServerError(w, r, err)
 	}

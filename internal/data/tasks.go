@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -56,8 +57,38 @@ func (dbm *TaskModel) Insert(task *Tasks) (int64, error) {
 	return id, nil
 }
 
-func (dbm *TaskModel) Get(id int64) (*Tasks, error) {
-	return nil, nil
+func (dbm *TaskModel) GetById(id int64) (*Tasks, error) {
+	if id < 1 {
+		return nil, ErrRecordNotFound
+	}
+	query := `SELECT id, name, description, status, priority, image, total_duration, 
+		    created_at, updated_at, deadline, category_id FROM tasks WHERE id = ?`
+	var task Tasks
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := dbm.DB.QueryRowContext(ctx, query, id).Scan(&task.ID,
+		&task.Name,
+		&task.Description,
+		&task.Status,
+		&task.Priority,
+		&task.Image,
+		&task.TotalDuration,
+		&task.CreatedAt,
+		&task.UpdatedAt,
+		&task.Deadline,
+		&task.CategoryID,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+	return &task, nil
 }
 
 func (dbm *TaskModel) Update(task *Tasks) error {
@@ -65,5 +96,24 @@ func (dbm *TaskModel) Update(task *Tasks) error {
 }
 
 func (dbm *TaskModel) Delete(id int64) error {
+	if id < 1 {
+		return ErrRecordNotFound
+	}
+	query := `DELETE FROM tasks WHERE id = ?`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	result, err := dbm.DB.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return ErrRecordNotFound
+	}
 	return nil
 }
