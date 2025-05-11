@@ -77,6 +77,61 @@ func (bknd *backend) showTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (bknd *backend) updateTaskHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := bknd.readIdParam(r, "id")
+	if err != nil {
+		bknd.errResourceNotFound(w, r)
+		return
+	}
+	task, err := bknd.models.Tasks.GetById(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			bknd.errResourceNotFound(w, r)
+		default:
+			bknd.errInternalServerError(w, r, err)
+		}
+		return
+	}
+	var input struct {
+		Name        *string          `json:"name"`
+		Description *string          `json:"description"`
+		Status      *data.StatusType `json:"status"`
+		Image       *string          `json:"image"`
+		Priority    *int             `json:"priority"`
+		Deadline    *time.Time       `json:"deadline"`
+		UserID      *int64           `json:"-"`
+		CategoryID  *int64           `json:"category_id"`
+	}
+	err = bknd.readJSON(w, r, &input)
+	if err != nil {
+		bknd.errBadRequest(w, r, err)
+		return
+	}
+	task.ApplyPartialUpdatesToTask(input.Name, input.Description,
+		input.Image, input.Status, input.Priority, input.Deadline, input.UserID, input.CategoryID)
+
+	vld := validator.NewValidator()
+	if data.ValidateTask(vld, task); !vld.Valid() {
+		bknd.errFailedValidation(w, r, vld.Errors)
+		return
+	}
+	err = bknd.models.Tasks.Update(task)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			bknd.errResourceNotFound(w, r)
+		default:
+			bknd.errInternalServerError(w, r, err)
+		}
+		return
+	}
+	err = bknd.writeJSON(w, http.StatusOK, wrapper{"task": task}, nil)
+	if err != nil {
+		bknd.errInternalServerError(w, r, err)
+	}
+}
+
 func (bknd *backend) deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := bknd.readIdParam(r, "id")
 	if err != nil {

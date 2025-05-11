@@ -47,3 +47,32 @@ func ValidateTask(vld *validator.Validator, task *Tasks) {
 		vld.CheckError(*task.CategoryID > 0, "category_id", "cannot be zero or negative")
 	}
 }
+
+func (task *Tasks) ApplyPartialUpdatesToTask(name, description, image *string, status *StatusType,
+	priority *int, deadline *time.Time, userId, categoryID *int64,
+) {
+	if name != nil {
+		task.Name = *name
+	}
+	if description != nil {
+		task.Description = *description
+	}
+	if image != nil {
+		task.Image = *image
+	}
+	if status != nil {
+		task.Status = *status
+	}
+	if priority != nil {
+		task.Priority = *priority
+	}
+	if deadline != nil {
+		task.Deadline = deadline
+	}
+	if userId != nil {
+		task.UserID = *userId
+	}
+	if categoryID != nil {
+		task.CategoryID = categoryID
+	}
+}

@@ -41,7 +41,20 @@ Content-Type: application/json
 }
 
 ### Get task by id
-GET http://localhost:4000/v1/tasks/8
+GET http://localhost:4000/v1/tasks/7
+
+### Update task by id
+PATCH http://localhost:4000/v1/tasks/7
+Content-Type: application/json
+
+{
+    "name": "Complete this project",
+    "status": "In Progress",
+    "priority": 1,
+    "image": ";aljdfiopehgrnmha;jklodhfghlakshjgdfjh",
+    "deadline": "2025-05-15T23:59:59Z",
+    "category_id": 6
+}
 
 ### Delete task by id
-DELETE http://localhost:4000/v1/tasks/8
+DELETE http://localhost:4000/v1/tasks/7

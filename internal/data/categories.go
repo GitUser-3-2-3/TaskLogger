@@ -26,13 +26,13 @@ type CategoryModel struct {
 }
 
 func (dbm *CategoryModel) Insert(ctg *Categories) (int64, error) {
-	query := `INSERT INTO categories (id, name, color, user_id)
-                VALUES (?, ?, ?, ?)`
+	query := `INSERT INTO categories (name, color, user_id)
+                VALUES (?, ?, ?)`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	args := []any{ctg.ID, ctg.Name, ctg.Color, ctg.UserID}
+	args := []any{ctg.Name, ctg.Color, ctg.UserID}
 	result, err := dbm.DB.ExecContext(ctx, query, args...)
 
 	var mysqlErr *mysql.MySQLError
@@ -77,22 +77,22 @@ func (dbm *CategoryModel) GetById(id int64) (*Categories, error) {
 	return &ctg, nil
 }
 
-func (dbm *CategoryModel) Update(category *Categories) error {
+func (dbm *CategoryModel) Update(ctg *Categories) error {
 	query := `UPDATE categories SET name = ?, color = ? WHERE id = ?`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	args := []any{category.Name, category.Color, category.ID}
-	_, err := dbm.DB.ExecContext(ctx, query, args...)
-
+	result, err := dbm.DB.ExecContext(ctx, query, ctg.Name, ctg.Color, ctg.ID)
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			return ErrRecordNotFound
-		default:
-			return err
-		}
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return ErrRecordNotFound
 	}
 	return nil
 }

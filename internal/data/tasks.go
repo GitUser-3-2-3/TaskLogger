@@ -62,7 +62,7 @@ func (dbm *TaskModel) GetById(id int64) (*Tasks, error) {
 		return nil, ErrRecordNotFound
 	}
 	query := `SELECT id, name, description, status, priority, image, total_duration, 
-		    created_at, updated_at, deadline, category_id FROM tasks WHERE id = ?`
+		    created_at, updated_at, deadline, tasks.user_id, category_id FROM tasks WHERE id = ?`
 	var task Tasks
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -78,6 +78,7 @@ func (dbm *TaskModel) GetById(id int64) (*Tasks, error) {
 		&task.CreatedAt,
 		&task.UpdatedAt,
 		&task.Deadline,
+		&task.UserID,
 		&task.CategoryID,
 	)
 	if err != nil {
@@ -92,6 +93,27 @@ func (dbm *TaskModel) GetById(id int64) (*Tasks, error) {
 }
 
 func (dbm *TaskModel) Update(task *Tasks) error {
+	query := `UPDATE tasks SET name = ?, description = ?, status = ?, image = ?, 
+		    priority = ?, deadline = ?, category_id = ? WHERE id = ?`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	args := []any{
+		task.Name, task.Description, task.Status, task.Image, task.Priority,
+		task.Deadline, task.CategoryID, task.ID,
+	}
+	result, err := dbm.DB.ExecContext(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return ErrRecordNotFound
+	}
 	return nil
 }
 
