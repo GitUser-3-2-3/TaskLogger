@@ -71,7 +71,8 @@ func (bknd *backend) showCategoriesHandler(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func (bknd *backend) showCategoriesByUserIdHandler(w http.ResponseWriter, r *http.Request) {
+// todo -> add user id retrieval from context instead of url.
+func (bknd *backend) showCategoriesForUserIdHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := bknd.readIdParam(r, "userId")
 	if err != nil {
 		bknd.errResourceNotFound(w, r)
@@ -83,6 +84,36 @@ func (bknd *backend) showCategoriesByUserIdHandler(w http.ResponseWriter, r *htt
 		return
 	}
 	err = bknd.writeJSON(w, http.StatusOK, wrapper{"categories": ctgList}, nil)
+	if err != nil {
+		bknd.errInternalServerError(w, r, err)
+	}
+}
+
+// todo -> add user id retrieval from context instead of url.
+// Inefficient method!
+func (bknd *backend) showCategoriesDetailsForUserIdHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := bknd.readIdParam(r, "userId")
+	if err != nil {
+		bknd.errResourceNotFound(w, r)
+		return
+	}
+	ctgList, err := bknd.models.Category.GetAllByUserId(id)
+	if err != nil {
+		bknd.errInternalServerError(w, r, err)
+		return
+	}
+	var taskList []*data.Tasks
+	var ctgDetails []wrapper
+
+	for _, ctg := range ctgList {
+		taskList, err = bknd.models.Tasks.GetAllByCategory(ctg.ID)
+		if err != nil {
+			bknd.errInternalServerError(w, r, err)
+			return
+		}
+		ctgDetails = append(ctgDetails, wrapper{ctg.Name: taskList})
+	}
+	err = bknd.writeJSON(w, http.StatusOK, wrapper{"categories": ctgDetails}, nil)
 	if err != nil {
 		bknd.errInternalServerError(w, r, err)
 	}

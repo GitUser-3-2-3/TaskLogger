@@ -77,6 +77,33 @@ func (bknd *backend) showTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (bknd *backend) showTasksByCategory(w http.ResponseWriter, r *http.Request) {
+	id, err := bknd.readIdParam(r, "id")
+	if err != nil {
+		bknd.errResourceNotFound(w, r)
+		return
+	}
+	ctg, err := bknd.models.Category.GetById(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			bknd.errResourceNotFound(w, r)
+		default:
+			bknd.errInternalServerError(w, r, err)
+		}
+		return
+	}
+	tasks, err := bknd.models.Tasks.GetAllByCategory(id)
+	if err != nil {
+		bknd.errInternalServerError(w, r, err)
+		return
+	}
+	err = bknd.writeJSON(w, http.StatusOK, wrapper{"category": ctg.Name, "tasks": tasks}, nil)
+	if err != nil {
+		bknd.errInternalServerError(w, r, err)
+	}
+}
+
 func (bknd *backend) updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := bknd.readIdParam(r, "id")
 	if err != nil {

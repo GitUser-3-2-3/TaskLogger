@@ -4,9 +4,8 @@
 
 # Custom
 .envrc
-
-# .http files
 *.http
+suggestions.md
 
 # User-specific stuff
 .idea/**/workspace.xml

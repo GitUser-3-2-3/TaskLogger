@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type StatusType string
@@ -90,6 +92,54 @@ func (dbm *TaskModel) GetById(id int64) (*Tasks, error) {
 		}
 	}
 	return &task, nil
+}
+
+func (dbm *TaskModel) GetAllByCategory(ctgID int64) ([]*Tasks, error) {
+	if ctgID < 1 {
+		return nil, ErrRecordNotFound
+	}
+	query := `SELECT id, name, description, status, priority, image, total_duration,
+                created_at, updated_at, deadline, user_id, category_id 
+                FROM tasks WHERE category_id = ?`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := dbm.DB.QueryContext(ctx, query, ctgID)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Error().Err(err).Msg("failed to close rows")
+		}
+	}()
+	var tasks []*Tasks
+
+	for rows.Next() {
+		var task Tasks
+		err = rows.Scan(&task.ID,
+			&task.Name,
+			&task.Description,
+			&task.Status,
+			&task.Priority,
+			&task.Image,
+			&task.TotalDuration,
+			&task.CreatedAt,
+			&task.UpdatedAt,
+			&task.Deadline,
+			&task.UserID,
+			&task.CategoryID,
+		)
+		if err != nil {
+			return nil, err
+		}
+		tasks = append(tasks, &task)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return tasks, nil
 }
 
 func (dbm *TaskModel) Update(task *Tasks) error {
