@@ -39,11 +39,12 @@ func (bknd *backend) createSessionHandler(w http.ResponseWriter, r *http.Request
 		SessionType:  input.SessionType,
 	}
 	var sessionId int64
+
 	err = bknd.withTransaction(func(tx *sql.Tx) error {
-		var err error
-		sessionId, err = bknd.models.Session.InsertTx(tx, session)
-		if err != nil {
-			return err
+		var txErr error
+		sessionId, txErr = bknd.models.Session.InsertTx(tx, session)
+		if txErr != nil {
+			return txErr
 		}
 		return bknd.updateTaskDuration(tx, session.TaskID, duration)
 	})
