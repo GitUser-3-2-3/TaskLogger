@@ -43,12 +43,12 @@ func (bknd *backend) errBadRequest(w http.ResponseWriter, r *http.Request, err e
 
 func (bknd *backend) errResourceNotFound(w http.ResponseWriter, r *http.Request) {
 	errMsg := "requested resource not found ·_·"
-	bknd.errResponseJSON(w, r, http.StatusMethodNotAllowed, errMsg)
+	bknd.errResponseJSON(w, r, http.StatusNotFound, errMsg)
 }
 
 func (bknd *backend) errDuplicateEntryFound(w http.ResponseWriter, r *http.Request, err error) {
 	errMsg := "duplicate entry not allowed"
-	bknd.errResponseJSON(w, r, http.StatusMethodNotAllowed, errMsg+", "+err.Error())
+	bknd.errResponseJSON(w, r, http.StatusBadRequest, errMsg+", "+err.Error())
 }
 
 func (bknd *backend) errInternalServerError(w http.ResponseWriter, r *http.Request, err error) {

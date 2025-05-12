@@ -48,15 +48,11 @@ func (dbm *TaskModel) Insert(task *Tasks) (int64, error) {
 		task.Name, task.Description, task.Status, task.Priority, task.Image,
 		task.Deadline, task.UserID, task.CategoryID,
 	}
-	rows, err := dbm.DB.ExecContext(ctx, query, args...)
+	result, err := dbm.DB.ExecContext(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}
-	id, err := rows.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-	return id, nil
+	return result.LastInsertId()
 }
 
 func (dbm *TaskModel) GetById(id int64) (*Tasks, error) {
@@ -177,6 +173,68 @@ func (dbm *TaskModel) Delete(id int64) error {
 	defer cancel()
 
 	result, err := dbm.DB.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return ErrRecordNotFound
+	}
+	return nil
+}
+
+// Transactional Methods
+
+func (dbm *TaskModel) GetByIdTx(tx *sql.Tx, id int64) (*Tasks, error) {
+	if id < 1 {
+		return nil, ErrRecordNotFound
+	}
+	query := `SELECT id, name, description, status, priority, image, total_duration, 
+		    created_at, updated_at, deadline, tasks.user_id, category_id FROM tasks WHERE id = ?`
+	var task Tasks
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := tx.QueryRowContext(ctx, query, id).Scan(&task.ID,
+		&task.Name,
+		&task.Description,
+		&task.Status,
+		&task.Priority,
+		&task.Image,
+		&task.TotalDuration,
+		&task.CreatedAt,
+		&task.UpdatedAt,
+		&task.Deadline,
+		&task.UserID,
+		&task.CategoryID,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+	return &task, nil
+}
+
+func (dbm *TaskModel) UpdateTx(tx *sql.Tx, task *Tasks) error {
+	query := `UPDATE tasks SET name = ?, description = ?, status = ?, image = ?, 
+		    total_duration = ?, priority = ?, deadline = ?, category_id = ? WHERE id = ?`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	args := []any{
+		task.Name, task.Description, task.Status, task.Image, task.TotalDuration, task.Priority,
+		task.Deadline, task.CategoryID, task.ID,
+	}
+	result, err := tx.ExecContext(ctx, query, args...)
 	if err != nil {
 		return err
 	}

@@ -20,6 +20,8 @@ func (bknd *backend) routes() http.Handler {
 
 	bknd.registerTaskRoutes(router)
 
+	bknd.registerSessionRoutes(router)
+
 	return bknd.recoverPanic(bknd.rateLimiter(router))
 }
 
@@ -43,4 +45,8 @@ func (bknd *backend) registerTaskRoutes(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodGet, "/v1/tasks/:id", bknd.showTaskHandler)
 	router.HandlerFunc(http.MethodPatch, "/v1/tasks/:id", bknd.updateTaskHandler)
 	router.HandlerFunc(http.MethodDelete, "/v1/tasks/:id", bknd.deleteTaskHandler)
+}
+
+func (bknd *backend) registerSessionRoutes(router *httprouter.Router) {
+	router.HandlerFunc(http.MethodPost, "/v1/sessions", bknd.createSessionHandler)
 }

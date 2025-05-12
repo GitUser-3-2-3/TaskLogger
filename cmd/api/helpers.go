@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -59,6 +60,26 @@ func (bknd *backend) readJSON(w http.ResponseWriter, r *http.Request, dst any) e
 		return errors.New("body must contain exactly one JSON object")
 	}
 	return nil
+}
+
+func (bknd *backend) withTransaction(fn func(tx *sql.Tx) error) error {
+	tx, err := bknd.models.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if val := recover(); val != nil {
+			_ = tx.Rollback()
+			panic(val)
+		}
+	}()
+	if err = fn(tx); err != nil {
+		if rbErr := tx.Rollback(); rbErr != nil {
+			bknd.logger.Error().Err(err).Err(rbErr).Msg("tx rollback failed")
+		}
+		return fmt.Errorf("tx error: %w", err)
+	}
+	return tx.Commit()
 }
 
 func (bknd *backend) decodeJSONError(err error) error {
