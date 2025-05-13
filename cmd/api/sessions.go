@@ -2,6 +2,7 @@ package main
 
 import (
 	"TaskLogger/internal/data"
+	"TaskLogger/internal/validator"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -38,15 +39,25 @@ func (bknd *backend) createSessionHandler(w http.ResponseWriter, r *http.Request
 		Note:         input.Note,
 		SessionType:  input.SessionType,
 	}
+	vld := validator.NewValidator()
+	if data.ValidateSession(vld, session); !vld.Valid() {
+		bknd.errFailedValidation(w, r, vld.Errors)
+		return
+	}
 	var sessionId int64
 
 	err = bknd.withTransaction(func(tx *sql.Tx) error {
 		var txErr error
+		task, err := bknd.models.Tasks.GetByIdTx(tx, session.TaskID)
+		if err != nil {
+			return err
+		}
 		sessionId, txErr = bknd.models.Session.InsertTx(tx, session)
 		if txErr != nil {
 			return txErr
 		}
-		return bknd.updateTaskDuration(tx, session.TaskID, duration)
+		task.TotalDuration += duration
+		return bknd.models.Tasks.UpdateTx(tx, task)
 	})
 	if err != nil {
 		switch {
@@ -65,13 +76,4 @@ func (bknd *backend) createSessionHandler(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		bknd.errInternalServerError(w, r, err)
 	}
-}
-
-func (bknd *backend) updateTaskDuration(tx *sql.Tx, taskId int64, duration int) error {
-	task, err := bknd.models.Tasks.GetByIdTx(tx, taskId)
-	if err != nil {
-		return err
-	}
-	task.TotalDuration += duration
-	return bknd.models.Tasks.UpdateTx(tx, task)
 }
