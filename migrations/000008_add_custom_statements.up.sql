@@ -13,6 +13,9 @@ FROM tasks;
 SELECT *
 FROM categories;
 
+SELECT *
+FROM sessions;
+
 DELETE
 FROM tasks
 WHERE id = 2;

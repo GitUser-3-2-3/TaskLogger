@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type SessionType string
@@ -43,4 +45,42 @@ func (dbm *SessionModel) InsertTx(tx *sql.Tx, session *Session) (int64, error) {
 		return 0, err
 	}
 	return result.LastInsertId()
+}
+
+func (dbm *SessionModel) GetForTask(taskId int64) ([]*Session, error) {
+	query := `SELECT * FROM sessions WHERE task_id = ?`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := dbm.DB.QueryContext(ctx, query, taskId)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Error().Err(err).Msg("couldn't close rows")
+		}
+	}()
+	var sessions []*Session
+
+	for rows.Next() {
+		var session Session
+		err = rows.Scan(&session.ID,
+			&session.TaskID,
+			&session.SessionStart,
+			&session.SessionEnd,
+			&session.Duration,
+			&session.Note,
+			&session.SessionType,
+		)
+		if err != nil {
+			return nil, err
+		}
+		sessions = append(sessions, &session)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return sessions, nil
 }

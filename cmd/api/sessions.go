@@ -77,3 +77,20 @@ func (bknd *backend) createSessionHandler(w http.ResponseWriter, r *http.Request
 		bknd.errInternalServerError(w, r, err)
 	}
 }
+
+func (bknd *backend) showSessionsForTaskHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := bknd.readIdParam(r, "id")
+	if err != nil {
+		bknd.errBadRequest(w, r, err)
+		return
+	}
+	sessions, err := bknd.models.Session.GetForTask(id)
+	if err != nil {
+		bknd.errInternalServerError(w, r, err)
+		return
+	}
+	err = bknd.writeJSON(w, http.StatusOK, wrapper{"sessions": sessions}, nil)
+	if err != nil {
+		bknd.errInternalServerError(w, r, err)
+	}
+}
