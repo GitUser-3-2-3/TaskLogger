@@ -35,8 +35,8 @@ func (dbm *SessionModel) InsertTx(tx *sql.Tx, session *Session) (int64, error) {
 	defer cancel()
 
 	args := []any{
-		session.TaskID, session.SessionStart, session.SessionEnd, session.Duration,
-		session.Note, session.SessionType,
+		session.TaskID, session.SessionStart, session.SessionEnd,
+		session.Duration, session.Note, session.SessionType,
 	}
 	result, err := tx.ExecContext(ctx, query, args...)
 	if err != nil {
