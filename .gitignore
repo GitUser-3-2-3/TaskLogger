@@ -6,6 +6,7 @@
 .envrc
 *.http
 suggestions.md
+old_migrations/
 
 # User-specific stuff
 .idea/**/workspace.xml

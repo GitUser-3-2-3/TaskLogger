@@ -15,6 +15,14 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+/*
+	todo 0-> refine the entities
+	todo 1-> migrate database to postgres
+	todo 2-> change all the queries to accommodate to postgres
+	todo 3-> instead of pq driver use pgx driver for database
+	todo 4-> write authentication
+*/
+
 const version = "1.0.0"
 
 type config struct {
