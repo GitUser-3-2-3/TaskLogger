@@ -12,7 +12,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 )
 
 /*
@@ -96,7 +96,7 @@ func runFlags(cfg *config) {
 }
 
 func connectDB(cfg config) (*sql.DB, error) {
-	db, err := sql.Open("mysql", cfg.db.dsn)
+	db, err := sql.Open("postgres", cfg.db.dsn)
 	if err != nil {
 		return nil, err
 	}
