@@ -3,6 +3,12 @@
   <component name="SqlDialectMappings">
     <file url="file://$PROJECT_DIR$/migrations/000001_create_project_enums.down.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/migrations/000001_create_project_enums.up.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/000002_create_users_table.up.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/000003_create_categories_table.down.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/000003_create_categories_table.up.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/000004_create_tasks_table.up.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/000005_create_sessions_table.up.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/000006_add_schema_indexes.up.sql" dialect="PostgreSQL" />
     <file url="PROJECT" dialect="PostgreSQL" />
   </component>
 </project>
