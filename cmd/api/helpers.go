@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -42,6 +43,20 @@ func (bknd *backend) readIdParam(r *http.Request, param string) (int64, error) {
 		return 0, errors.New("invalid id")
 	}
 	return id, nil
+}
+
+func (bknd *backend) readUUIDParam(r *http.Request, param string) (string, error) {
+	params := httprouter.ParamsFromContext(r.Context())
+	uid := params.ByName(param)
+	if uid == "" || !isValidUUID(uid) {
+		return "", errors.New("invalid uid")
+	}
+	return uid, nil
+}
+
+func isValidUUID(id string) bool {
+	_, err := uuid.Parse(id)
+	return err == nil
 }
 
 func (bknd *backend) readJSON(w http.ResponseWriter, r *http.Request, dst any) error {

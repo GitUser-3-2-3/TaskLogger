@@ -37,7 +37,7 @@ func (bknd *backend) registerUserRoutes(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodGet,
 		"/v1/users/:userId/categories", bknd.showCategoriesForUserIdHandler)
 	router.HandlerFunc(http.MethodGet,
-		"/v1/users/:userId/categories/tasks", bknd.showCategoriesDetailsForUserIdHandler)
+		"/v1/users/:userId/categories/tasks", bknd.showCategoryDetailsForUserIdHandler)
 }
 
 func (bknd *backend) registerTaskRoutes(router *httprouter.Router) {

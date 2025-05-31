@@ -16,11 +16,10 @@ import (
 )
 
 /*
-	todo 0-> refine the entities
-	todo 1-> migrate database to postgres
-	todo 2-> change all the queries to accommodate to postgres
-	todo 3-> instead of pq driver use pgx driver for database
-	todo 4-> write authentication
+	todo 0-> refine the entities -- DONE
+	todo 1-> migrate database to postgres -- DONE
+	todo 2-> change all the queries to accommodate to postgres -- In Progress
+	todo 4-> write authentication -- Not Started
 */
 
 const version = "1.0.0"

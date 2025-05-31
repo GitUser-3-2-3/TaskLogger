@@ -6,7 +6,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/go-sql-driver/mysql"
+	"github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 )
 
@@ -15,56 +15,55 @@ var (
 )
 
 type Categories struct {
-	ID     int64  `json:"id"`
-	Name   string `json:"name"`
-	Color  string `json:"color"`
-	UserID int64  `json:"-"`
+	ID        int64     `json:"category_id"`
+	Name      string    `json:"name"`
+	Color     string    `json:"color"`
+	UserID    string    `json:"-"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type CategoryModel struct {
 	DB *sql.DB
 }
 
-func (dbm *CategoryModel) Insert(ctg *Categories) (int64, error) {
-	query := `INSERT INTO categories (name, color, user_id)
-                VALUES (?, ?, ?)`
+func (dbm *CategoryModel) Insert(ctg *Categories) error {
+	query := `INSERT INTO categories (name, color, user_id) VALUES ($1, $2, $3) 
+		   RETURNING ctg_id`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	args := []any{ctg.Name, ctg.Color, ctg.UserID}
-	result, err := dbm.DB.ExecContext(ctx, query, args...)
+	err := dbm.DB.QueryRowContext(ctx, query, args...).Scan(&ctg.ID)
 
-	var mysqlErr *mysql.MySQLError
+	var pgErr *pq.Error
 	if err != nil {
 		switch {
-		case errors.As(err, &mysqlErr) && mysqlErr.Number == 1062:
-			return 0, ErrDuplicateEntry
+		case errors.As(err, &pgErr) && pgErr.Code == "23505":
+			return ErrDuplicateEntry
 		default:
-			return 0, err
+			return err
 		}
 	}
-	id, err := result.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-	return id, nil
+	return nil
 }
 
-func (dbm *CategoryModel) GetById(id int64) (*Categories, error) {
-	if id < 1 {
+func (dbm *CategoryModel) GetById(ctgId int64) (*Categories, error) {
+	if ctgId < 1 {
 		return nil, ErrRecordNotFound
 	}
-	query := `SELECT id, name, color, user_id FROM categories WHERE id = ?`
+	query := `SELECT ctg_id, name, color, user_id, created_at FROM categories 
+                 WHERE ctg_id = $1`
 	var ctg Categories
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := dbm.DB.QueryRowContext(ctx, query, id).Scan(&ctg.ID,
+	err := dbm.DB.QueryRowContext(ctx, query, ctgId).Scan(&ctg.ID,
 		&ctg.Name,
 		&ctg.Color,
 		&ctg.UserID,
+		&ctg.CreatedAt,
 	)
 	if err != nil {
 		switch {
@@ -78,12 +77,41 @@ func (dbm *CategoryModel) GetById(id int64) (*Categories, error) {
 }
 
 func (dbm *CategoryModel) Update(ctg *Categories) error {
-	query := `UPDATE categories SET name = ?, color = ? WHERE id = ?`
+	if ctg.ID < 1 {
+		return ErrRecordNotFound
+	}
+	query := `UPDATE categories SET name = $2, color = $3 WHERE ctg_id = $1
+                 RETURNING ctg_id, name, color`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	result, err := dbm.DB.ExecContext(ctx, query, ctg.Name, ctg.Color, ctg.ID)
+	args := []any{ctg.ID, ctg.Name, ctg.Color}
+	err := dbm.DB.QueryRowContext(ctx, query, args...).Scan(&ctg.ID,
+		&ctg.Name,
+		&ctg.Color,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return ErrRecordNotFound
+		default:
+			return err
+		}
+	}
+	return nil
+}
+
+func (dbm *CategoryModel) Delete(ctgId int64) error {
+	if ctgId < 1 {
+		return ErrRecordNotFound
+	}
+	query := `DELETE FROM categories WHERE ctg_id = $1`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	result, err := dbm.DB.ExecContext(ctx, query, ctgId)
 	if err != nil {
 		return err
 	}
@@ -97,34 +125,11 @@ func (dbm *CategoryModel) Update(ctg *Categories) error {
 	return nil
 }
 
-func (dbm *CategoryModel) Delete(id int64) error {
-	if id < 1 {
-		return ErrRecordNotFound
-	}
-	query := `DELETE FROM categories WHERE id = ?`
-
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	result, err := dbm.DB.ExecContext(ctx, query, id)
-	if err != nil {
-		return err
-	}
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rows == 0 {
-		return ErrRecordNotFound
-	}
-	return nil
-}
-
-func (dbm *CategoryModel) GetAllByUserId(userId int64) ([]*Categories, error) {
-	if userId < 1 {
+func (dbm *CategoryModel) GetAllByUserId(userId string) ([]*Categories, error) {
+	if userId == "" || !isValidUUID(userId) {
 		return nil, ErrRecordNotFound
 	}
-	query := `SELECT id, name, color FROM categories WHERE user_id = ?`
+	query := `SELECT ctg_id, name, color, created_at FROM categories WHERE user_id = $1`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()

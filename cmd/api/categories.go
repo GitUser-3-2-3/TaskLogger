@@ -12,7 +12,7 @@ func (bknd *backend) createCategoriesHandler(w http.ResponseWriter, r *http.Requ
 	var input struct {
 		Name   string `json:"name"`
 		Color  string `json:"color"`
-		UserID int64  `json:"user_id"`
+		UserID string `json:"user_id"`
 	}
 	err := bknd.readJSON(w, r, &input)
 	if err != nil {
@@ -21,16 +21,15 @@ func (bknd *backend) createCategoriesHandler(w http.ResponseWriter, r *http.Requ
 	}
 	vld := validator.NewValidator()
 
-	category := &data.Categories{
-		Name:   input.Name,
+	ctg := &data.Categories{Name: input.Name,
 		Color:  input.Color,
 		UserID: input.UserID,
 	}
-	if data.ValidateCategory(vld, category); !vld.Valid() {
+	if data.ValidateCategory(vld, ctg); !vld.Valid() {
 		bknd.errFailedValidation(w, r, vld.Errors)
 		return
 	}
-	id, err := bknd.models.Category.Insert(category)
+	err = bknd.models.Category.Insert(ctg)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrDuplicateEntry):
@@ -41,9 +40,9 @@ func (bknd *backend) createCategoriesHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	headers := make(http.Header)
-	headers.Set("Location", fmt.Sprintf("/v1/category/%d", id))
+	headers.Set("Location", fmt.Sprintf("/v1/category/%d", ctg.ID))
 
-	err = bknd.writeJSON(w, http.StatusCreated, wrapper{"id": id}, headers)
+	err = bknd.writeJSON(w, http.StatusCreated, wrapper{"id": ctg.ID}, headers)
 	if err != nil {
 		bknd.errInternalServerError(w, r, err)
 	}
@@ -73,7 +72,7 @@ func (bknd *backend) showCategoriesHandler(w http.ResponseWriter, r *http.Reques
 
 // todo -> add user id retrieval from context instead of url.
 func (bknd *backend) showCategoriesForUserIdHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := bknd.readIdParam(r, "userId")
+	id, err := bknd.readUUIDParam(r, "userId")
 	if err != nil {
 		bknd.errResourceNotFound(w, r)
 		return
@@ -91,8 +90,8 @@ func (bknd *backend) showCategoriesForUserIdHandler(w http.ResponseWriter, r *ht
 
 // todo -> add user id retrieval from context instead of url.
 // Inefficient method!
-func (bknd *backend) showCategoriesDetailsForUserIdHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := bknd.readIdParam(r, "userId")
+func (bknd *backend) showCategoryDetailsForUserIdHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := bknd.readUUIDParam(r, "userId")
 	if err != nil {
 		bknd.errResourceNotFound(w, r)
 		return
@@ -138,7 +137,7 @@ func (bknd *backend) updateCategoryHandler(w http.ResponseWriter, r *http.Reques
 	var input struct {
 		Name   *string `json:"name"`
 		Color  *string `json:"color"`
-		UserID *int64  `json:"-"`
+		UserID *string `json:"-"`
 	}
 	err = bknd.readJSON(w, r, &input)
 	if err != nil {

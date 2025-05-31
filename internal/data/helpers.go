@@ -4,17 +4,27 @@ import (
 	"TaskLogger/internal/validator"
 	"slices"
 	"time"
+
+	"github.com/google/uuid"
 )
 
-func ValidateCategory(vld *validator.Validator, category *Categories) {
-	vld.CheckError(category.Name != "", "name", "must not be empty")
-	vld.CheckError(len(category.Name) > 0 &&
-		len(category.Name) <= 50, "name", "cannot be longer than 50 chars")
+func ValidateCategory(vld *validator.Validator, ctg *Categories) {
+	vld.CheckError(ctg.Name != "", "name", "must not be empty")
+	vld.CheckError(len(ctg.Name) > 0 &&
+		len(ctg.Name) <= 50, "name", "cannot be longer than 50 chars")
 
-	vld.CheckError(category.UserID > 0, "user_id", "cannot be zero or negative")
+	vld.CheckError(ctg.UserID != "", "user_id", "cannot be zero or negative")
+	vld.CheckError(isValidUUID(ctg.UserID), "user_id", "user id is not valid")
 }
 
-func (ctg *Categories) ApplyPartialUpdatesToCtg(name, color *string, userID *int64) {
+func isValidUUID(id string) bool {
+	if _, err := uuid.Parse(id); err != nil {
+		return false
+	}
+	return true
+}
+
+func (ctg *Categories) ApplyPartialUpdatesToCtg(name, color *string, userID *string) {
 	if name != nil {
 		ctg.Name = *name
 	}
