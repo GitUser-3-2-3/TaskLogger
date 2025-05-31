@@ -54,7 +54,7 @@ func (bknd *backend) showCategoriesHandler(w http.ResponseWriter, r *http.Reques
 		bknd.errResourceNotFound(w, r)
 		return
 	}
-	ctg, err := bknd.models.Category.GetById(id)
+	ctg, err := bknd.models.Category.GetByCtgId(id)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
@@ -124,7 +124,7 @@ func (bknd *backend) updateCategoryHandler(w http.ResponseWriter, r *http.Reques
 		bknd.errResourceNotFound(w, r)
 		return
 	}
-	category, err := bknd.models.Category.GetById(id)
+	category, err := bknd.models.Category.GetByCtgId(id)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):

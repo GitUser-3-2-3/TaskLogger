@@ -42,7 +42,9 @@ func ValidateTask(vld *validator.Validator, task *Tasks) {
 
 	vld.CheckError(len(task.Description) <= 250, "description", "cannot exceed 250 characters")
 
-	validStatuses := []StatusType{StatusNotStarted, StatusInProgress, StatusPaused, StatusCompleted}
+	validStatuses := []StatusType{StatusPending,
+		StatusInProgress, StatusPaused, StatusCompleted, StatusCancelled}
+
 	vld.CheckError(slices.Contains(validStatuses, task.Status),
 		"status", "cannot be other than (Not Started, In Progress, Paused, Completed)")
 
@@ -51,7 +53,8 @@ func ValidateTask(vld *validator.Validator, task *Tasks) {
 	if task.Deadline != nil {
 		vld.CheckError(task.Deadline.After(time.Now()), "deadline", "must be in the future")
 	}
-	vld.CheckError(task.UserID > 0, "user_id", "cannot be zero or negative")
+	vld.CheckError(task.UserID != "", "user_id", "cannot be zero or negative")
+	vld.CheckError(isValidUUID(task.UserID), "user_id", "user_id is not valid")
 
 	if task.CategoryID != nil {
 		vld.CheckError(*task.CategoryID > 0, "category_id", "cannot be zero or negative")
@@ -59,7 +62,7 @@ func ValidateTask(vld *validator.Validator, task *Tasks) {
 }
 
 func (task *Tasks) ApplyPartialUpdatesToTask(name, description, image *string, status *StatusType,
-	priority *int, deadline *time.Time, userId, categoryID *int64,
+	priority *int, deadline *time.Time, userId *string, categoryID *int64,
 ) {
 	if name != nil {
 		task.Name = *name
@@ -68,7 +71,7 @@ func (task *Tasks) ApplyPartialUpdatesToTask(name, description, image *string, s
 		task.Description = *description
 	}
 	if image != nil {
-		task.Image = *image
+		task.ImageUrl = *image
 	}
 	if status != nil {
 		task.Status = *status
@@ -88,7 +91,8 @@ func (task *Tasks) ApplyPartialUpdatesToTask(name, description, image *string, s
 }
 
 func ValidateSession(vld *validator.Validator, session *Session) {
-	vld.CheckError(session.TaskID > 0, "task_id", "must be a positive integer")
+	vld.CheckError(session.TaskID != "", "task_id", "must be a positive integer")
+	vld.CheckError(isValidUUID(session.TaskID), "task_id", "task_id is not valid")
 	vld.CheckError(!session.SessionStart.IsZero(), "session_start", "must be provided")
 	vld.CheckError(!session.SessionEnd.IsZero(), "session_end", "must be provided")
 	vld.CheckError(session.SessionEnd.After(session.SessionStart), "session_end", "must be after session start")

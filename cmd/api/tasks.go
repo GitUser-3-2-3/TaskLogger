@@ -17,7 +17,7 @@ func (bknd *backend) createTaskHandler(w http.ResponseWriter, r *http.Request) {
 		Priority    int             `json:"priority"`
 		Image       string          `json:"image"`
 		Deadline    *time.Time      `json:"deadline"`
-		UserID      int64           `json:"user_id"`
+		UserID      string          `json:"user_id"`
 		CategoryID  *int64          `json:"category_id"`
 	}
 	err := bknd.readJSON(w, r, &input)
@@ -32,7 +32,7 @@ func (bknd *backend) createTaskHandler(w http.ResponseWriter, r *http.Request) {
 		Description: input.Description,
 		Status:      input.Status,
 		Priority:    input.Priority,
-		Image:       input.Image,
+		ImageUrl:    input.Image,
 		Deadline:    input.Deadline,
 		UserID:      input.UserID,
 		CategoryID:  input.CategoryID,
@@ -41,27 +41,27 @@ func (bknd *backend) createTaskHandler(w http.ResponseWriter, r *http.Request) {
 		bknd.errFailedValidation(w, r, vld.Errors)
 		return
 	}
-	id, err := bknd.models.Tasks.Insert(task)
+	err = bknd.models.Tasks.Insert(task)
 	if err != nil {
 		bknd.errInternalServerError(w, r, err)
 		return
 	}
 	headers := make(http.Header)
-	headers.Set("Location", fmt.Sprintf("/v1/tasks/%d", id))
+	headers.Set("Location", fmt.Sprintf("/v1/tasks/%s", task.ID))
 
-	err = bknd.writeJSON(w, http.StatusCreated, wrapper{"id": id}, headers)
+	err = bknd.writeJSON(w, http.StatusCreated, wrapper{"id": task.ID}, headers)
 	if err != nil {
 		bknd.errInternalServerError(w, r, err)
 	}
 }
 
 func (bknd *backend) showTaskHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := bknd.readIdParam(r, "id")
+	id, err := bknd.readUUIDParam(r, "id")
 	if err != nil {
 		bknd.errResourceNotFound(w, r)
 		return
 	}
-	task, err := bknd.models.Tasks.GetById(id)
+	task, err := bknd.models.Tasks.GetByTaskId(id)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
@@ -83,7 +83,7 @@ func (bknd *backend) showTasksByCategory(w http.ResponseWriter, r *http.Request)
 		bknd.errResourceNotFound(w, r)
 		return
 	}
-	ctg, err := bknd.models.Category.GetById(id)
+	ctg, err := bknd.models.Category.GetByCtgId(id)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
@@ -105,12 +105,12 @@ func (bknd *backend) showTasksByCategory(w http.ResponseWriter, r *http.Request)
 }
 
 func (bknd *backend) updateTaskHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := bknd.readIdParam(r, "id")
+	id, err := bknd.readUUIDParam(r, "id")
 	if err != nil {
 		bknd.errResourceNotFound(w, r)
 		return
 	}
-	task, err := bknd.models.Tasks.GetById(id)
+	task, err := bknd.models.Tasks.GetByTaskId(id)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
@@ -127,7 +127,7 @@ func (bknd *backend) updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 		Image       *string          `json:"image"`
 		Priority    *int             `json:"priority"`
 		Deadline    *time.Time       `json:"deadline"`
-		UserID      *int64           `json:"-"`
+		UserID      *string          `json:"-"`
 		CategoryID  *int64           `json:"category_id"`
 	}
 	err = bknd.readJSON(w, r, &input)
@@ -160,7 +160,7 @@ func (bknd *backend) updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (bknd *backend) deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := bknd.readIdParam(r, "id")
+	id, err := bknd.readUUIDParam(r, "id")
 	if err != nil {
 		bknd.errResourceNotFound(w, r)
 		return

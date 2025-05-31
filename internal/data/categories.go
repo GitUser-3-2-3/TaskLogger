@@ -48,7 +48,7 @@ func (dbm *CategoryModel) Insert(ctg *Categories) error {
 	return nil
 }
 
-func (dbm *CategoryModel) GetById(ctgId int64) (*Categories, error) {
+func (dbm *CategoryModel) GetByCtgId(ctgId int64) (*Categories, error) {
 	if ctgId < 1 {
 		return nil, ErrRecordNotFound
 	}

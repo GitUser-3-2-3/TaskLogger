@@ -17,7 +17,7 @@ const (
 
 type Session struct {
 	ID           int64       `json:"id"`
-	TaskID       int64       `json:"task_id"`
+	TaskID       string      `json:"task_id"`
 	SessionStart time.Time   `json:"session_start"`
 	SessionEnd   time.Time   `json:"session_end"`
 	Duration     int         `json:"duration"`

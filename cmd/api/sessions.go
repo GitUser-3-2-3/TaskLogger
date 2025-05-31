@@ -15,7 +15,7 @@ import (
 
 func (bknd *backend) createSessionHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		TaskID       int64            `json:"task_id"`
+		TaskID       string           `json:"task_id"`
 		SessionStart time.Time        `json:"session_start"`
 		SessionEnd   time.Time        `json:"session_end"`
 		Note         string           `json:"note"`
@@ -48,7 +48,7 @@ func (bknd *backend) createSessionHandler(w http.ResponseWriter, r *http.Request
 
 	err = bknd.withTransaction(func(tx *sql.Tx) error {
 		var txErr error
-		task, err := bknd.models.Tasks.GetByIdTx(tx, session.TaskID)
+		task, err := bknd.models.Tasks.GetByTaskIdTx(tx, session.TaskID)
 		if err != nil {
 			return err
 		}
@@ -56,7 +56,7 @@ func (bknd *backend) createSessionHandler(w http.ResponseWriter, r *http.Request
 		if txErr != nil {
 			return txErr
 		}
-		task.TotalDuration += duration
+		task.Duration += duration
 		return bknd.models.Tasks.UpdateTx(tx, task)
 	})
 	if err != nil {

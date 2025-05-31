@@ -6,73 +6,85 @@ import (
 	"errors"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
 
+type PriorityType string
 type StatusType string
 
 const (
-	StatusNotStarted StatusType = "Not Started"
+	StatusPending    StatusType = "Pending"
 	StatusInProgress StatusType = "In Progress"
 	StatusPaused     StatusType = "Paused"
 	StatusCompleted  StatusType = "Completed"
+	StatusCancelled  StatusType = "Cancelled"
+)
+
+const (
+	PriorityLow    PriorityType = "low"
+	PriorityMedium PriorityType = "medium"
+	PriorityHigh   PriorityType = "high"
+	PriorityUrgent PriorityType = "urgent"
 )
 
 type Tasks struct {
-	ID            int64      `json:"id"`
-	Name          string     `json:"name"`
-	Description   string     `json:"description,omitempty"`
-	Status        StatusType `json:"status"`
-	Priority      int        `json:"priority"`
-	Image         string     `json:"image,omitempty"`
-	TotalDuration int        `json:"total-duration"`
-	CreatedAt     time.Time  `json:"created-at"`
-	UpdatedAt     time.Time  `json:"updated-at"`
-	Deadline      *time.Time `json:"deadline,omitempty"`
-	UserID        int64      `json:"-"`
-	CategoryID    *int64     `json:"category_id,omitempty"`
+	ID          string     `json:"task_id"`
+	Name        string     `json:"name"`
+	Description string     `json:"description,omitempty"`
+	Status      StatusType `json:"status"`
+	Priority    int        `json:"priority"`
+	ImageUrl    string     `json:"image_url,omitempty"`
+	Duration    int        `json:"duration"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+	Deadline    *time.Time `json:"deadline,omitempty"`
+	UserID      string     `json:"-"`
+	CategoryID  *int64     `json:"category_id,omitempty"`
 }
 
 type TaskModel struct {
 	DB *sql.DB
 }
 
-func (dbm *TaskModel) Insert(task *Tasks) (int64, error) {
-	query := `INSERT INTO tasks (name, description, status, priority, image, deadline, user_id, category_id) 
-		    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+func (dbm *TaskModel) Insert(task *Tasks) error {
+	task.ID = uuid.New().String()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	query := `INSERT INTO tasks (task_id, name, description, status, priority, image_url, deadline, 
+		   user_id, category_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	args := []any{
-		task.Name, task.Description, task.Status, task.Priority, task.Image,
+		task.ID, task.Name, task.Description, task.Status, task.Priority, task.ImageUrl,
 		task.Deadline, task.UserID, task.CategoryID,
 	}
-	result, err := dbm.DB.ExecContext(ctx, query, args...)
-	if err != nil {
-		return 0, err
+	row := dbm.DB.QueryRowContext(ctx, query, args...)
+	if err := row.Err(); err != nil {
+		return err
 	}
-	return result.LastInsertId()
+	return nil
 }
 
-func (dbm *TaskModel) GetById(id int64) (*Tasks, error) {
-	if id < 1 {
+func (dbm *TaskModel) GetByTaskId(taskId string) (*Tasks, error) {
+	if taskId == "" || !isValidUUID(taskId) {
 		return nil, ErrRecordNotFound
 	}
-	query := `SELECT id, name, description, status, priority, image, total_duration, 
-		    created_at, updated_at, deadline, tasks.user_id, category_id FROM tasks WHERE id = ?`
+	query := `SELECT task_id, name, description, status, priority, image_url, duration_minutes, 
+		   created_at, updated_at, deadline, user_id, category_id FROM tasks WHERE task_id = $1`
 	var task Tasks
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := dbm.DB.QueryRowContext(ctx, query, id).Scan(&task.ID,
+	err := dbm.DB.QueryRowContext(ctx, query, taskId).Scan(&task.ID,
 		&task.Name,
 		&task.Description,
 		&task.Status,
 		&task.Priority,
-		&task.Image,
-		&task.TotalDuration,
+		&task.ImageUrl,
+		&task.Duration,
 		&task.CreatedAt,
 		&task.UpdatedAt,
 		&task.Deadline,
@@ -94,9 +106,9 @@ func (dbm *TaskModel) GetAllByCategory(ctgID int64) ([]*Tasks, error) {
 	if ctgID < 1 {
 		return nil, ErrRecordNotFound
 	}
-	query := `SELECT id, name, description, status, priority, image, total_duration,
+	query := `SELECT task_id, name, description, status, priority, image_url, duration_minutes,
                 created_at, updated_at, deadline, user_id, category_id 
-                FROM tasks WHERE category_id = ?`
+                FROM tasks WHERE category_id = $1`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -119,8 +131,8 @@ func (dbm *TaskModel) GetAllByCategory(ctgID int64) ([]*Tasks, error) {
 			&task.Description,
 			&task.Status,
 			&task.Priority,
-			&task.Image,
-			&task.TotalDuration,
+			&task.ImageUrl,
+			&task.Duration,
 			&task.CreatedAt,
 			&task.UpdatedAt,
 			&task.Deadline,
@@ -139,14 +151,18 @@ func (dbm *TaskModel) GetAllByCategory(ctgID int64) ([]*Tasks, error) {
 }
 
 func (dbm *TaskModel) Update(task *Tasks) error {
-	query := `UPDATE tasks SET name = ?, description = ?, status = ?, image = ?, 
-		    priority = ?, deadline = ?, category_id = ? WHERE id = ?`
+	if task.ID == "" || !isValidUUID(task.ID) {
+		return ErrRecordNotFound
+	}
+	query := `UPDATE tasks SET name = $1, description = $2, status = $3, image_url = $4,
+                 duration_minutes = $5, priority = $6, deadline = $7, category_id = $8
+                 WHERE task_id = $9`
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	args := []any{
-		task.Name, task.Description, task.Status, task.Image, task.Priority,
+		task.Name, task.Description, task.Status, task.ImageUrl, task.Duration, task.Priority,
 		task.Deadline, task.CategoryID, task.ID,
 	}
 	result, err := dbm.DB.ExecContext(ctx, query, args...)
@@ -163,16 +179,16 @@ func (dbm *TaskModel) Update(task *Tasks) error {
 	return nil
 }
 
-func (dbm *TaskModel) Delete(id int64) error {
-	if id < 1 {
+func (dbm *TaskModel) Delete(taskId string) error {
+	if taskId == "" || !isValidUUID(taskId) {
 		return ErrRecordNotFound
 	}
-	query := `DELETE FROM tasks WHERE id = ?`
+	query := `DELETE FROM tasks WHERE task_id = $1`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	result, err := dbm.DB.ExecContext(ctx, query, id)
+	result, err := dbm.DB.ExecContext(ctx, query, taskId)
 	if err != nil {
 		return err
 	}
@@ -188,24 +204,26 @@ func (dbm *TaskModel) Delete(id int64) error {
 
 // Transactional Methods
 
-func (dbm *TaskModel) GetByIdTx(tx *sql.Tx, id int64) (*Tasks, error) {
-	if id < 1 {
+func (dbm *TaskModel) GetByTaskIdTx(tx *sql.Tx, taskId string) (*Tasks, error) {
+	if taskId == "" || !isValidUUID(taskId) {
 		return nil, ErrRecordNotFound
 	}
-	query := `SELECT id, name, description, status, priority, image, total_duration, 
-		    created_at, updated_at, deadline, tasks.user_id, category_id FROM tasks WHERE id = ?`
+	query := `SELECT task_id, name, description, status, priority, image_url, duration_minutes, 
+		   created_at, updated_at, deadline, user_id, category_id 
+		   FROM tasks WHERE task_id = $1`
+
 	var task Tasks
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := tx.QueryRowContext(ctx, query, id).Scan(&task.ID,
+	err := tx.QueryRowContext(ctx, query, taskId).Scan(&task.ID,
 		&task.Name,
 		&task.Description,
 		&task.Status,
 		&task.Priority,
-		&task.Image,
-		&task.TotalDuration,
+		&task.ImageUrl,
+		&task.Duration,
 		&task.CreatedAt,
 		&task.UpdatedAt,
 		&task.Deadline,
@@ -224,14 +242,18 @@ func (dbm *TaskModel) GetByIdTx(tx *sql.Tx, id int64) (*Tasks, error) {
 }
 
 func (dbm *TaskModel) UpdateTx(tx *sql.Tx, task *Tasks) error {
-	query := `UPDATE tasks SET name = ?, description = ?, status = ?, image = ?, 
-		    total_duration = ?, priority = ?, deadline = ?, category_id = ? WHERE id = ?`
+	if task.ID == "" || !isValidUUID(task.ID) {
+		return ErrRecordNotFound
+	}
+	query := `UPDATE tasks SET name = $1, description = $2, status = $3, image_url = $4, 
+                 duration_minutes = $5, priority = $6, deadline = $7, category_id = $8 
+                 WHERE task_id = $9`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	args := []any{
-		task.Name, task.Description, task.Status, task.Image, task.TotalDuration, task.Priority,
+		task.Name, task.Description, task.Status, task.ImageUrl, task.Duration, task.Priority,
 		task.Deadline, task.CategoryID, task.ID,
 	}
 	result, err := tx.ExecContext(ctx, query, args...)
