@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS categories
 (
-    ctg_id     UUID PRIMARY KEY         DEFAULT gen_random_uuid(),
+    ctg_id     BIGSERIAL PRIMARY KEY,
     name       VARCHAR(100) UNIQUE NOT NULL,
     color      VARCHAR(7),
     user_id    UUID                NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
