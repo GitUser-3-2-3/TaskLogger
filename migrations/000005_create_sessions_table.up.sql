@@ -11,3 +11,6 @@ CREATE TABLE sessions
     -- Constraints
     CONSTRAINT valid_session_time CHECK (ended_at IS NULL OR ended_at > started_at)
 );
+
+ALTER TABLE sessions
+    DROP COLUMN created_at;

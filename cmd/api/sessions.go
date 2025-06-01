@@ -15,44 +15,42 @@ import (
 
 func (bknd *backend) createSessionHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		TaskID       string           `json:"task_id"`
-		SessionStart time.Time        `json:"session_start"`
-		SessionEnd   time.Time        `json:"session_end"`
-		Note         string           `json:"note"`
-		SessionType  data.SessionType `json:"session_type"`
+		TaskID    string    `json:"task_id"`
+		StartedAt time.Time `json:"started_at"`
+		EndedAt   time.Time `json:"ended_at"`
+		Note      string    `json:"note"`
 	}
 	err := bknd.readJSON(w, r, &input)
 	if err != nil {
 		bknd.errBadRequest(w, r, err)
 		return
 	}
-	if input.SessionEnd.Before(input.SessionStart) {
-		bknd.errBadRequest(w, r, fmt.Errorf("session start must be before session end"))
+	if input.EndedAt.Before(input.StartedAt) {
+		bknd.errBadRequest(w, r, fmt.Errorf("started-at must be before ended-at"))
 		return
 	}
-	duration := int(input.SessionEnd.Sub(input.SessionStart).Minutes())
+	duration := int(input.EndedAt.Sub(input.StartedAt).Minutes())
+
 	session := &data.Session{
-		TaskID:       input.TaskID,
-		SessionStart: input.SessionStart,
-		SessionEnd:   input.SessionEnd,
-		Duration:     duration,
-		Note:         input.Note,
-		SessionType:  input.SessionType,
+		TaskID:    input.TaskID,
+		StartedAt: input.StartedAt,
+		EndedAt:   input.EndedAt,
+		Duration:  duration,
+		Note:      input.Note,
 	}
 	vld := validator.NewValidator()
+
 	if data.ValidateSession(vld, session); !vld.Valid() {
 		bknd.errFailedValidation(w, r, vld.Errors)
 		return
 	}
-	var sessionId int64
-
 	err = bknd.withTransaction(func(tx *sql.Tx) error {
 		var txErr error
 		task, err := bknd.models.Tasks.GetByTaskIdTx(tx, session.TaskID)
 		if err != nil {
 			return err
 		}
-		sessionId, txErr = bknd.models.Session.InsertTx(tx, session)
+		txErr = bknd.models.Session.InsertTx(tx, session)
 		if txErr != nil {
 			return txErr
 		}
@@ -69,9 +67,8 @@ func (bknd *backend) createSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 	headers := make(http.Header)
-	headers.Set("Location", fmt.Sprintf("/v1/session/%d", sessionId))
+	headers.Set("Location", fmt.Sprintf("/v1/session/%s", session.ID))
 
-	session.ID = sessionId
 	err = bknd.writeJSON(w, http.StatusCreated, wrapper{"session": session}, headers)
 	if err != nil {
 		bknd.errInternalServerError(w, r, err)

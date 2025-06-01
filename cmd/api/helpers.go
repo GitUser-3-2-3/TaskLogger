@@ -83,16 +83,25 @@ func (bknd *backend) withTransaction(fn func(tx *sql.Tx) error) error {
 		return err
 	}
 	defer func() {
+		if nil == err {
+			return
+		}
 		if val := recover(); val != nil {
-			_ = tx.Rollback()
+			rollbackErr := tx.Rollback()
+			if rollbackErr != nil {
+				bknd.logger.Error().Err(rollbackErr).Msg("Failed to rollback transaction after panic")
+			}
+			bknd.logger.Error().Interface("panic", val).Msg("Panic occurred during transaction")
 			panic(val)
+		} else if err != nil {
+			rollbackErr := tx.Rollback()
+			if rollbackErr != nil {
+				bknd.logger.Error().Err(err).Err(rollbackErr).Msg("Failed to rollback transaction")
+			}
 		}
 	}()
 	if err = fn(tx); err != nil {
-		if rbErr := tx.Rollback(); rbErr != nil {
-			bknd.logger.Error().Err(err).Err(rbErr).Msg("tx rollback failed")
-		}
-		return fmt.Errorf("tx error: %w", err)
+		return fmt.Errorf("transaction failed: %w", err)
 	}
 	return tx.Commit()
 }

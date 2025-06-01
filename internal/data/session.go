@@ -5,52 +5,47 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
 
-type SessionType string
-
-const (
-	SessionWork   SessionType = "work"
-	SessionsBreak SessionType = "break"
-)
-
 type Session struct {
-	ID           int64       `json:"id"`
-	TaskID       string      `json:"task_id"`
-	SessionStart time.Time   `json:"session_start"`
-	SessionEnd   time.Time   `json:"session_end"`
-	Duration     int         `json:"duration"`
-	Note         string      `json:"note"`
-	SessionType  SessionType `json:"session_type"`
+	ID        string    `json:"id"`
+	TaskID    string    `json:"task_id"`
+	StartedAt time.Time `json:"started_at"`
+	EndedAt   time.Time `json:"ended_at"`
+	Duration  int       `json:"duration"`
+	Note      string    `json:"note"`
 }
 
 type SessionModel struct {
 	DB *sql.DB
 }
 
-func (dbm *SessionModel) InsertTx(tx *sql.Tx, session *Session) (int64, error) {
-	query := `INSERT INTO sessions (task_id, session_start, session_end, duration, note, session_type)
-		    VALUES (?, ?, ?, ?, ?, ?)`
+func (dbm *SessionModel) InsertTx(tx *sql.Tx, session *Session) error {
+	session.ID = uuid.New().String()
+
+	query := `INSERT INTO sessions (session_id, task_id, started_at, ended_at, duration, notes)
+		   VALUES ($1, $2, $3, $4, $5, $6)`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	args := []any{
-		session.TaskID, session.SessionStart, session.SessionEnd,
-		session.Duration, session.Note, session.SessionType,
+		session.ID, session.TaskID, session.StartedAt, session.EndedAt,
+		session.Duration, session.Note,
 	}
-	result, err := tx.ExecContext(ctx, query, args...)
-	if err != nil {
-		return 0, err
+	row := tx.QueryRowContext(ctx, query, args...)
+	if err := row.Err(); err != nil {
+		return row.Err()
 	}
-	return result.LastInsertId()
+	return nil
 }
 
 func (dbm *SessionModel) GetForTask(taskId int64) ([]*Session, error) {
-	query := `SELECT * FROM sessions WHERE task_id = ?`
+	query := `SELECT * FROM sessions WHERE task_id = $1`
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	rows, err := dbm.DB.QueryContext(ctx, query, taskId)
@@ -68,11 +63,10 @@ func (dbm *SessionModel) GetForTask(taskId int64) ([]*Session, error) {
 		var session Session
 		err = rows.Scan(&session.ID,
 			&session.TaskID,
-			&session.SessionStart,
-			&session.SessionEnd,
+			&session.StartedAt,
+			&session.EndedAt,
 			&session.Duration,
 			&session.Note,
-			&session.SessionType,
 		)
 		if err != nil {
 			return nil, err

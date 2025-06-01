@@ -96,16 +96,12 @@ func (task *Tasks) ApplyPartialUpdatesToTask(name, description, image *string, s
 func ValidateSession(vld *validator.Validator, session *Session) {
 	vld.CheckError(session.TaskID != "", "task_id", "must be a positive integer")
 	vld.CheckError(isValidUUID(session.TaskID), "task_id", "task_id is not valid")
-	vld.CheckError(!session.SessionStart.IsZero(), "session_start", "must be provided")
-	vld.CheckError(!session.SessionEnd.IsZero(), "session_end", "must be provided")
-	vld.CheckError(session.SessionEnd.After(session.SessionStart), "session_end", "must be after session start")
+	vld.CheckError(!session.StartedAt.IsZero(), "session_start", "must be provided")
+	vld.CheckError(!session.EndedAt.IsZero(), "session_end", "must be provided")
+	vld.CheckError(session.EndedAt.After(session.StartedAt), "session_end", "must be after session start")
 	vld.CheckError(len(session.Note) <= 500, "note", "cannot exceed 500 characters")
 
-	validTypes := []SessionType{SessionWork, SessionsBreak}
-	vld.CheckError(slices.Contains(validTypes, session.SessionType),
-		"session_type", "must be either 'work' or 'break'")
-
-	expectedDuration := int(session.SessionEnd.Sub(session.SessionStart).Minutes())
+	expectedDuration := int(session.EndedAt.Sub(session.StartedAt).Minutes())
 	vld.CheckError(session.Duration == expectedDuration, "duration",
 		"must match the time difference between start and end times")
 }
