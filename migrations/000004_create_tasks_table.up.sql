@@ -17,3 +17,10 @@ CREATE TABLE tasks
     CONSTRAINT positive_duration CHECK (duration_minutes > 0),
     CONSTRAINT future_deadline CHECK (deadline > created_at)
 );
+
+ALTER TABLE tasks DROP CONSTRAINT IF EXISTS tasks_category_id_fkey;
+
+ALTER TABLE tasks ALTER COLUMN category_id TYPE BIGINT USING NULL;
+
+ALTER TABLE tasks ADD CONSTRAINT tasks_category_id_fkey
+    FOREIGN KEY (category_id) REFERENCES categories (ctg_id) ON DELETE CASCADE;
