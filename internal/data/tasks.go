@@ -29,18 +29,18 @@ const (
 )
 
 type Tasks struct {
-	ID          string     `json:"task_id"`
-	Name        string     `json:"name"`
-	Description string     `json:"description,omitempty"`
-	Status      StatusType `json:"status"`
-	Priority    int        `json:"priority"`
-	ImageUrl    string     `json:"image_url,omitempty"`
-	Duration    int        `json:"duration"`
-	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at"`
-	Deadline    *time.Time `json:"deadline,omitempty"`
-	UserID      string     `json:"-"`
-	CategoryID  *int64     `json:"category_id,omitempty"`
+	ID          string       `json:"task_id"`
+	Name        string       `json:"name"`
+	Description string       `json:"description,omitempty"`
+	Status      StatusType   `json:"status"`
+	Priority    PriorityType `json:"priority"`
+	ImageUrl    string       `json:"image_url,omitempty"`
+	Duration    int          `json:"duration"`
+	CreatedAt   time.Time    `json:"created_at"`
+	UpdatedAt   time.Time    `json:"updated_at"`
+	Deadline    *time.Time   `json:"deadline,omitempty"`
+	UserID      string       `json:"-"`
+	CategoryID  *int64       `json:"category_id,omitempty"`
 }
 
 type TaskModel struct {

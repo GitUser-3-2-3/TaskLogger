@@ -11,14 +11,14 @@ import (
 
 func (bknd *backend) createTaskHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Name        string          `json:"name"`
-		Description string          `json:"description"`
-		Status      data.StatusType `json:"status"`
-		Priority    int             `json:"priority"`
-		Image       string          `json:"image"`
-		Deadline    *time.Time      `json:"deadline"`
-		UserID      string          `json:"user_id"`
-		CategoryID  *int64          `json:"category_id"`
+		Name        string            `json:"name"`
+		Description string            `json:"description"`
+		Status      data.StatusType   `json:"status"`
+		Priority    data.PriorityType `json:"priority"`
+		Image       string            `json:"image"`
+		Deadline    *time.Time        `json:"deadline"`
+		UserID      string            `json:"user_id"`
+		CategoryID  *int64            `json:"category_id"`
 	}
 	err := bknd.readJSON(w, r, &input)
 	if err != nil {
@@ -121,14 +121,14 @@ func (bknd *backend) updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input struct {
-		Name        *string          `json:"name"`
-		Description *string          `json:"description"`
-		Status      *data.StatusType `json:"status"`
-		Image       *string          `json:"image"`
-		Priority    *int             `json:"priority"`
-		Deadline    *time.Time       `json:"deadline"`
-		UserID      *string          `json:"-"`
-		CategoryID  *int64           `json:"category_id"`
+		Name        *string            `json:"name"`
+		Description *string            `json:"description"`
+		Status      *data.StatusType   `json:"status"`
+		Image       *string            `json:"image"`
+		Priority    *data.PriorityType `json:"priority"`
+		Deadline    *time.Time         `json:"deadline"`
+		UserID      *string            `json:"-"`
+		CategoryID  *int64             `json:"category_id"`
 	}
 	err = bknd.readJSON(w, r, &input)
 	if err != nil {

@@ -48,7 +48,10 @@ func ValidateTask(vld *validator.Validator, task *Tasks) {
 	vld.CheckError(slices.Contains(validStatuses, task.Status),
 		"status", "cannot be other than (Not Started, In Progress, Paused, Completed)")
 
-	vld.CheckError(task.Priority >= 1 && task.Priority <= 5, "priority", "must be between 1 and 5")
+	validPriority := []PriorityType{PriorityLow, PriorityMedium, PriorityHigh, PriorityUrgent}
+
+	vld.CheckError(slices.Contains(validPriority, task.Priority),
+		"priority", "cannot be other than (low, medium, high, urgent)")
 
 	if task.Deadline != nil {
 		vld.CheckError(task.Deadline.After(time.Now()), "deadline", "must be in the future")
@@ -62,7 +65,7 @@ func ValidateTask(vld *validator.Validator, task *Tasks) {
 }
 
 func (task *Tasks) ApplyPartialUpdatesToTask(name, description, image *string, status *StatusType,
-	priority *int, deadline *time.Time, userId *string, categoryID *int64,
+	priority *PriorityType, deadline *time.Time, userId *string, categoryID *int64,
 ) {
 	if name != nil {
 		task.Name = *name
