@@ -71,6 +71,7 @@ func (bknd *backend) showCategoriesHandler(w http.ResponseWriter, r *http.Reques
 }
 
 // todo -> add user id retrieval from context instead of url.
+
 func (bknd *backend) showCategoriesForUserIdHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := bknd.readUUIDParam(r, "userId")
 	if err != nil {
@@ -90,6 +91,7 @@ func (bknd *backend) showCategoriesForUserIdHandler(w http.ResponseWriter, r *ht
 
 // todo -> add user id retrieval from context instead of url.
 // Inefficient method!
+
 func (bknd *backend) showCategoryDetailsForUserIdHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := bknd.readUUIDParam(r, "userId")
 	if err != nil {
