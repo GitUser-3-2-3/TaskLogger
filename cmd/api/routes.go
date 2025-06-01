@@ -27,10 +27,10 @@ func (bknd *backend) routes() http.Handler {
 
 func (bknd *backend) registerCategoryRoutes(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPost, "/v1/categories", bknd.createCategoriesHandler)
-	router.HandlerFunc(http.MethodGet, "/v1/categories/:id", bknd.showCategoriesHandler)
-	router.HandlerFunc(http.MethodPatch, "/v1/categories/:id", bknd.updateCategoryHandler)
-	router.HandlerFunc(http.MethodDelete, "/v1/categories/:id", bknd.deleteCategoryHandler)
-	router.HandlerFunc(http.MethodGet, "/v1/categories/:id/tasks", bknd.showTasksByCategory)
+	router.HandlerFunc(http.MethodGet, "/v1/categories/:categoryId", bknd.showCategoriesHandler)
+	router.HandlerFunc(http.MethodPatch, "/v1/categories/:categoryId", bknd.updateCategoryHandler)
+	router.HandlerFunc(http.MethodDelete, "/v1/categories/:categoryId", bknd.deleteCategoryHandler)
+	router.HandlerFunc(http.MethodGet, "/v1/categories/:categoryId/tasks", bknd.showTasksByCategory)
 }
 
 func (bknd *backend) registerUserRoutes(router *httprouter.Router) {
@@ -42,11 +42,11 @@ func (bknd *backend) registerUserRoutes(router *httprouter.Router) {
 
 func (bknd *backend) registerTaskRoutes(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPost, "/v1/tasks", bknd.createTaskHandler)
-	router.HandlerFunc(http.MethodGet, "/v1/tasks/:id", bknd.showTaskHandler)
-	router.HandlerFunc(http.MethodPatch, "/v1/tasks/:id", bknd.updateTaskHandler)
-	router.HandlerFunc(http.MethodDelete, "/v1/tasks/:id", bknd.deleteTaskHandler)
+	router.HandlerFunc(http.MethodGet, "/v1/tasks/:taskId", bknd.showTaskHandler)
+	router.HandlerFunc(http.MethodPatch, "/v1/tasks/:taskId", bknd.updateTaskHandler)
+	router.HandlerFunc(http.MethodDelete, "/v1/tasks/:taskId", bknd.deleteTaskHandler)
 
-	router.HandlerFunc(http.MethodGet, "/v1/tasks/:id/sessions", bknd.showSessionsForTaskHandler)
+	router.HandlerFunc(http.MethodGet, "/v1/tasks/:taskId/sessions", bknd.showSessionsForTaskHandler)
 }
 
 func (bknd *backend) registerSessionRoutes(router *httprouter.Router) {

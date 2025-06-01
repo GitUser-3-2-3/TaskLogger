@@ -78,7 +78,7 @@ func (bknd *backend) showTaskHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (bknd *backend) showTasksByCategory(w http.ResponseWriter, r *http.Request) {
-	id, err := bknd.readIdParam(r, "id")
+	id, err := bknd.readIdParam(r, "categoryId")
 	if err != nil {
 		bknd.errResourceNotFound(w, r)
 		return

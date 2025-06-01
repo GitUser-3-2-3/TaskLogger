@@ -42,14 +42,14 @@ func (bknd *backend) createCategoriesHandler(w http.ResponseWriter, r *http.Requ
 	headers := make(http.Header)
 	headers.Set("Location", fmt.Sprintf("/v1/category/%d", ctg.ID))
 
-	err = bknd.writeJSON(w, http.StatusCreated, wrapper{"id": ctg.ID}, headers)
+	err = bknd.writeJSON(w, http.StatusCreated, wrapper{"categoryId": ctg.ID}, headers)
 	if err != nil {
 		bknd.errInternalServerError(w, r, err)
 	}
 }
 
 func (bknd *backend) showCategoriesHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := bknd.readIdParam(r, "id")
+	id, err := bknd.readIdParam(r, "categoryId")
 	if err != nil {
 		bknd.errResourceNotFound(w, r)
 		return
@@ -119,7 +119,7 @@ func (bknd *backend) showCategoryDetailsForUserIdHandler(w http.ResponseWriter, 
 }
 
 func (bknd *backend) updateCategoryHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := bknd.readIdParam(r, "id")
+	id, err := bknd.readIdParam(r, "categoryId")
 	if err != nil {
 		bknd.errResourceNotFound(w, r)
 		return
@@ -168,7 +168,7 @@ func (bknd *backend) updateCategoryHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (bknd *backend) deleteCategoryHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := bknd.readIdParam(r, "id")
+	id, err := bknd.readIdParam(r, "categoryId")
 	if err != nil {
 		bknd.errResourceNotFound(w, r)
 		return
