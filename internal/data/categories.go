@@ -147,7 +147,7 @@ func (dbm *CategoryModel) GetAllByUserId(userId string) ([]*Categories, error) {
 
 	for rows.Next() {
 		var ctg Categories
-		err = rows.Scan(&ctg.ID, &ctg.Name, &ctg.Color)
+		err = rows.Scan(&ctg.ID, &ctg.Name, &ctg.Color, &ctg.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
